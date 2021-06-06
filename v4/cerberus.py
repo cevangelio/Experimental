@@ -3,6 +3,7 @@ to do:
 1. excessive spread filter
 
 '''
+from numpy import e
 import pandas as pd
 import time
 import pandas_ta as ta
@@ -46,7 +47,7 @@ def reverse_trade(type):
         return 'sell'
 
 df_raw = pd.DataFrame()
-df_raw['Currency'] = ['GBPUSD', 'USDCHF', 'GBPCHF']
+df_raw['Currency'] = ['EURUSD', 'USDCHF', 'EURCHF']
 
 current_price_l = []
 ema_l = []
@@ -100,34 +101,37 @@ else:
 timestmp = datetime.now().strftime('%H:%M')
 lot_factor = .0001
 profit_factor = .01
-vol = (MT.Get_dynamic_account_info()['balance'])*lot_factor
+vol = round((MT.Get_dynamic_account_info()['balance'])*lot_factor,2)
 
-if top_pair == 'GBPCHF':
+if top_pair == 'EURCHF':
     try:
-        MT.Open_order(instrument='GBPCHF', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+        MT.Open_order(instrument='EURCHF', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         time.sleep(1)
-        MT.Open_order(instrument='GBPUSD', ordertype= reverse_trade(top_pair_trend), volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+        MT.Open_order(instrument='EURUSD', ordertype= reverse_trade(top_pair_trend), volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         MT.Open_order(instrument='USDCHF', ordertype= reverse_trade(top_pair_trend), volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         telegram_bot_sendtext('New basket opened. Lead: ' + top_pair + ' , direction: ' + top_pair_trend)
     except:
-        telegram_bot_sendtext('Error opening basket.')
-elif top_pair == 'GBPUSD':
+        error = MT.order_return_message
+        telegram_bot_sendtext('Error opening basket. ', error)
+elif top_pair == 'EURUSD':
     try:
-        MT.Open_order(instrument='GBPUSD', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+        MT.Open_order(instrument='EURUSD', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         time.sleep(1)
-        MT.Open_order(instrument='GBPCHF', ordertype= reverse_trade(top_pair_trend), volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+        MT.Open_order(instrument='EURCHF', ordertype= reverse_trade(top_pair_trend), volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         time.sleep(1)
         MT.Open_order(instrument='USDCHF', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         telegram_bot_sendtext('New basket opened. Lead: ' + top_pair + ' , direction: ' + top_pair_trend)
     except:
-        telegram_bot_sendtext('Error opening basket.')
+        error = MT.order_return_message
+        telegram_bot_sendtext('Error opening basket. ', error)
 elif top_pair == 'USDCHF':
     try:
-        MT.Open_order(instrument='GBPUSD', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+        MT.Open_order(instrument='EURUSD', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         time.sleep(1)
-        MT.Open_order(instrument='GBPCHF', ordertype= reverse_trade(top_pair_trend), volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+        MT.Open_order(instrument='EURCHF', ordertype= reverse_trade(top_pair_trend), volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         time.sleep(1)
         MT.Open_order(instrument='USDCHF', ordertype= top_pair_trend, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
         telegram_bot_sendtext('New basket opened. Lead: ' + top_pair + ' , direction: ' + top_pair_trend)
     except:
-        telegram_bot_sendtext('Error opening basket.')
+        error = MT.order_return_message
+        telegram_bot_sendtext('Error opening basket. ', error)
