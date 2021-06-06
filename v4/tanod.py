@@ -21,7 +21,7 @@ bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()
 
-df_pairs = pd.read_csv('macdema_test.csv')
+df_pairs = pd.read_csv(home+'/Desktop/Experimental/v4/macdema_test.csv')
 
 def telegram_bot_sendtext(bot_message):
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
