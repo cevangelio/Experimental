@@ -85,7 +85,7 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
         # else:
         #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
 print("Tanod is running....")
-heartbeat_list = [0,5,10,15,20,25,30,35,40,45,50,55]
+heartbeat_list = [0,5,10,15,20, 25,30,35,40,45,50,55]
 while datetime.now().weekday() <= 4:
     positions = MT.Get_all_open_positions()
     if len(positions) > 0:
@@ -95,8 +95,8 @@ while datetime.now().weekday() <= 4:
             break_even(pair = currency, atr_target = 6, amount = 0.3)
             time.sleep(1)
             check_news(pair)
-    elif datetime.now().minute in heartbeat_list:
-        print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))
+            if datetime.now().minute in heartbeat_list and datetime.now().second == 3:
+                print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))
     else:
         timestmp = datetime.now().strftime('%H:%M')
         print(timestmp + ' - No positions monitored.')
