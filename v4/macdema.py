@@ -281,8 +281,12 @@ for currency in positions['instrument']:
     else:
         print(currency, ' is okay. ')
 
+styx_time = [5,9,13,17,21,1]
+if datetime.now().hour in styx_time:
+    styx_execute = os.popen('python3 ' + home + '/Desktop/Experimental/v4/river_styx.py').read()
+
 if len(to_trade_final) == 0:
-    telegram_bot_sendtext('No valid setup found.')
+    telegram_bot_sendtext('Garuda no valid setup found.')
     exit()
 else:
     pass
@@ -305,7 +309,3 @@ for pair in to_trade_final['Currency']:
     else:
         telegram_bot_sendtext('Garuda setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
 
-styx_time = [5,9,13,17,21,1]
-if datetime.now().hour in styx_time:
-    os.popen('python3 ' + home + '/Desktop/Experimental/v4/river_styx.py').read()
-    telegram_bot_sendtext('styx ran')

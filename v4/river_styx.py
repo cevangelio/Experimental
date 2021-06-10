@@ -79,6 +79,8 @@ df_raw['Styx Bias'] = styx_trade_logic
 print(df_raw)
 
 to_trade_final = df_raw[df_raw['Styx Bias'] != 'ignore']
+if len(to_trade_final) == 0:
+    telegram_bot_sendtext('Styx no valid trade.')
 
 for pair in to_trade_final['Currency']:
     dirxn = to_trade_final['Styx Bias'][to_trade_final['Currency'] == pair].values[0]
