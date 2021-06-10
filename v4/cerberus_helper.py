@@ -36,9 +36,9 @@ def basket_close(target=500, lot_based='no', per_lot = 1,shirt_protect='yes', s_
                 MT.Close_position_by_ticket(ticket=ticket)
                 telegram_bot_sendtext('All positions closed. Basket target reached. Profit: ' + str(round(pnl, 2)))
         elif shirt_protect == 'yes' and pnl <= (-balance*s_p):
+            telegram_bot_sendtext('Shirt protection activated. Closing all positions.' + str(round(pnl, 2)))
             for ticket in positions['ticket']:
                 MT.Close_position_by_ticket(ticket=ticket)
-                telegram_bot_sendtext('All positions closed. Shirt protection activated. Profit: ' + str(round(pnl, 2)))
     elif lot_based == 'yes':
         total_lot = positions['volume'].sum()
         target_x = total_lot*per_lot

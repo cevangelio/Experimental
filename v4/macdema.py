@@ -22,6 +22,7 @@ import pandas as pd
 import requests
 import datetime
 from datetime import datetime
+import os
 import time
 from pathlib import Path
 import pandas_ta as ta
@@ -292,14 +293,19 @@ for pair in to_trade_final['Currency']:
     tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
     timestmp = datetime.now().strftime('%H:%M')
-    vol = 2.0
+    vol = 1
     if spread <= 10.0:
         try:
-            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment = 'MACDEMARSI v1 ' + timestmp)
-            telegram_bot_sendtext('Valid setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
+            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment = 'garuda ' + timestmp)
+            telegram_bot_sendtext('Garuda setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
             time.sleep(3)
         except Exception as e:
-            telegram_bot_sendtext('Valid setup found. Error opening position: ' + pair + ' (' + dirxn.upper() + ')')
+            telegram_bot_sendtext('Garuda setup found. Error opening position: ' + pair + ' (' + dirxn.upper() + ')')
             telegram_bot_sendtext(str(e))
     else:
-        telegram_bot_sendtext('Valid setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
+        telegram_bot_sendtext('Garuda setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
+
+styx_time = [5,9,13,17,21,1]
+if datetime.now().hour in styx_time:
+    os.popen('python3 ' + home + '/Desktop/Experimental/v4/river_styx.py').read()
+    telegram_bot_sendtext('styx ran')

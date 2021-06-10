@@ -1,6 +1,7 @@
 '''
 to do:
 1. excessive spread filter
+2. trend is not priority but ATR, then trend
 
 '''
 from numpy import e
