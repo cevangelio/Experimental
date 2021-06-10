@@ -85,9 +85,11 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
         # else:
         #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
 print("Tanod is running....")
+higher_pnl = 0
 heartbeat_list = [0,5,10,15,20, 25,30,35,40,45,50,55]
 while datetime.now().weekday() <= 4:
     positions = MT.Get_all_open_positions()
+    pnl = positions['profit'].sum()
     if len(positions) > 0:
         basket_close(target=500, lot_based='no', per_lot = 1)
         time.sleep(1)
@@ -95,7 +97,8 @@ while datetime.now().weekday() <= 4:
             break_even(pair = currency, atr_target = 6, amount = 0.3)
             time.sleep(1)
             check_news(pair)
-            if datetime.now().minute in heartbeat_list and datetime.now().second == 3:
+            if pnl > higher_pnl:
+                higher_pnl = pnl
                 print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))
     else:
         timestmp = datetime.now().strftime('%H:%M')
