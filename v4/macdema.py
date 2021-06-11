@@ -38,9 +38,9 @@ con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
 if datetime.now().weekday() > 4: #don't run on weekends
     exit()
-elif datetime.now().weekday() <=1:
+elif datetime.now().weekday() <=0:
     exit()
-elif datetime.now().weekday() == 2 and datetime.now().hour < 17:
+elif datetime.now().weekday() == 1 and datetime.now().hour < 17:
     exit()
 else:
     pass
