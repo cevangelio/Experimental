@@ -28,7 +28,9 @@ spread_l = []
 for currency in df_raw['Currency']:
     bars = pd.DataFrame(MT.Get_last_x_ticks_from_now(instrument=currency, nbrofticks=800))
     bars['spread raw'] = np.array(bars['bid']) - np.array(bars['ask'])
-    spread = bars['spread raw'].mean()
+    spread_raw = bars['spread raw'].mean()
+    point = MT.Get_instrument_info(instrument=currency)['point']
+    spread = round(abs(spread_raw/point), 0)
     print(currency, ' - ', spread)
     spread_l.append(spread)
 
