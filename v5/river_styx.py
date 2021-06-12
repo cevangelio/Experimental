@@ -43,6 +43,7 @@ ema_l = []
 macd_l = []
 trendline_raw_l = []
 rsi_l = []
+rsi_trend_l = []
 x_bars = 600
 
 for currency in df_raw['Currency']:
@@ -55,9 +56,13 @@ for currency in df_raw['Currency']:
     ema_l.append(ema)
     atr_raw = ta.atr(high = bars['high'], low = bars['low'], close = bars['close'],mamode = 'EMA')
     rsi_raw = ta.rsi(bars['close'], length = 14)
+    rsi_trend_raw = ta.rsi(bars['close'], length = 200)
     bars['rsi'] = rsi_raw
+    bars['rsi trend'] = rsi_trend_raw
     rsi = rsi_raw[len(bars)-1]
     rsi_l.append(rsi)
+    rsi_trend = rsi_trend_raw[len(bars)-1]
+    rsi_trend_l.append(rsi_trend)
     trendline_raw = (((bars['ema'].loc[len(bars) - 20]) - (bars['ema'].loc[len(bars) - 1]))/bars['ema'].loc[len(bars) - 1])*100
     trendline_raw_l.append(abs(trendline_raw))
 
@@ -65,12 +70,13 @@ df_raw['Current Price'] = current_price_l
 df_raw['EMA240'] = ema_l
 df_raw['Trendline Raw'] = trendline_raw_l
 df_raw['rsi'] = rsi_l
+df_raw['rsi trend'] = rsi_trend_l
 
 styx_trade_logic = []
 for pair in df_raw['Currency']:
-    if (df_raw['Current Price'][df_raw['Currency'] == pair].values[0] > df_raw['EMA240'][df_raw['Currency'] == pair].values[0]) and (df_raw['rsi'][df_raw['Currency'] == pair].values[0] >= 65):
+    if (df_raw['Current Price'][df_raw['Currency'] == pair].values[0] > df_raw['EMA240'][df_raw['Currency'] == pair].values[0]) and (df_raw['rsi'][df_raw['Currency'] == pair].values[0] >= 65) and (df_raw['rsi trend'][df_raw['Currency'] == pair].values[0] < 50):
         styx_trade_logic.append('sell')
-    elif (df_raw['Current Price'][df_raw['Currency'] == pair].values[0] < df_raw['EMA240'][df_raw['Currency'] == pair].values[0]) and (df_raw['rsi'][df_raw['Currency'] == pair].values[0] <= 35):
+    elif (df_raw['Current Price'][df_raw['Currency'] == pair].values[0] < df_raw['EMA240'][df_raw['Currency'] == pair].values[0]) and (df_raw['rsi'][df_raw['Currency'] == pair].values[0] <= 35) and (df_raw['rsi trend'][df_raw['Currency'] == pair].values[0] > 50):
         styx_trade_logic.append('buy')
     else:
         styx_trade_logic.append('ignore')
