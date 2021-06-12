@@ -1,6 +1,16 @@
 #macd
 
 '''
+
+strategy:
+
+1. MACD cross <buy = negative MACD> <sell = positive MACD>
+2. RSI <buy = above 50> <sell = below 50>
+3. TF = 4h
+4. TP = 2.5 ATR or RSI reverse (invisible)
+5. SL = SL reverse (invisible)
+6. shirt protect
+
 to do:
 3. SL = 3ATR but needs helper to track to SL BE
 4. Learn to hedge
@@ -77,10 +87,10 @@ atr_l = []
 rsi_l = []
 x_bars = 600
 for currency in df_raw['Currency']:
-    bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value('H1'), nbrofbars=x_bars))
+    bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value('H4'), nbrofbars=x_bars))
     current_price = bars['close'].loc[len(bars) - 1]
     current_price_l.append(current_price)
-    ema_raw = ta.ema(bars['close'], length = 200)
+    ema_raw = ta.ema(bars['close'], length = 240)
     bars['ema'] = ema_raw
     ema = ema_raw[len(bars) - 1] #last value
     ema_l.append(ema)
@@ -192,7 +202,7 @@ for line in range(0, len(df_raw)):
     rsi_score_raw = df_raw['rsi'].loc[line]
     if df_raw['Trend'].loc[line] == 'buy':
         # if 50 <= rsi_score_raw <= 65:
-        if rsi_score_raw <= 60:
+        if rsi_score_raw >= 60:
             rsi_score.append('buy')
         else:
             rsi_score.append('ignore')
@@ -218,9 +228,9 @@ to_trade_raw.drop(columns = 'index', inplace = True)
 trade = []
 
 for line in range(0, len(to_trade_raw)):
-    if to_trade_raw['Trend'].loc[line] == 'sell' and to_trade_raw['Previous MACD Trend'].loc[line] == 'ignore' and to_trade_raw['Current MACD Trend'].loc[line] == 'sell' and to_trade_raw['Trendline'].loc[line] == 'sloped' and to_trade_raw['ATR Away'].loc[line] == 'sell' and to_trade_raw['RSI Trend'].loc[line] == 'sell':
+    if to_trade_raw['Trend'].loc[line] == 'sell' and to_trade_raw['Previous MACD Trend'].loc[line] == 'ignore' and to_trade_raw['Current MACD Trend'].loc[line] == 'sell' and to_trade_raw['Trendline'].loc[line] == 'sloped' and to_trade_raw['RSI Trend'].loc[line] == 'sell':
         trade.append('valid sell')
-    elif to_trade_raw['Trend'].loc[line] == 'buy' and to_trade_raw['Previous MACD Trend'].loc[line] == 'ignore' and to_trade_raw['Current MACD Trend'].loc[line] == 'buy' and to_trade_raw['Trendline'].loc[line] == 'sloped' and to_trade_raw['ATR Away'].loc[line] == 'buy' and to_trade_raw['RSI Trend'].loc[line] == 'buy':
+    elif to_trade_raw['Trend'].loc[line] == 'buy' and to_trade_raw['Previous MACD Trend'].loc[line] == 'ignore' and to_trade_raw['Current MACD Trend'].loc[line] == 'buy' and to_trade_raw['Trendline'].loc[line] == 'sloped' and to_trade_raw['RSI Trend'].loc[line] == 'buy':
         trade.append('valid buy')
     else:
         trade.append('not valid setup')

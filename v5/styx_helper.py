@@ -43,20 +43,20 @@ def basket_close(target=500, lot_based='no', per_lot = 1, port=0):
         if pnl >= target:
             for ticket in positions['ticket']:
                 MT.Close_position_by_ticket(ticket=ticket)
-            telegram_bot_sendtext('All positions closed. Basket target reached. Profit: ' + str(round(pnl, 2)))
-        # else:
-        #     print('Target profit not reached. Current PNL: ' + str(pnl))
+                telegram_bot_sendtext('All positions closed. Basket target reached. Profit: ' + str(round(pnl, 2)))
+        else:
+            print('Target profit not reached. Current PNL: ' + str(pnl))
     elif lot_based == 'yes':
         total_lot = positions['volume'].sum()
         target_x = total_lot*per_lot
         if pnl >= target_x:
             for ticket in positions['ticket']:
                 MT.Close_position_by_ticket(ticket=ticket)
-            telegram_bot_sendtext('All positions closed. Basket target reached. Profit: ' + str(round(pnl, 2)))
-        # else:
-        #     print('Target profit not reached. Current PNL: ' + str(pnl))
+                telegram_bot_sendtext('All positions closed. Basket target reached. Profit: ' + str(round(pnl, 2)))
+        else:
+            print('Target profit not reached. Current PNL: ' + str(pnl))
 
-def break_even(pair, atr_target = 4, amount = 0.2, port=0):
+def break_even(pair, atr_target = 2, amount = 0.2, port=0):
     positions = MT.Get_all_open_positions()
     dirxn = positions['position_type'][positions['instrument'] == pair].values[0]
     atr = df_pairs['atr'][df_pairs['Currency'] == pair].values[0]
@@ -70,8 +70,8 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
             except:
                 error = MT.order_return_message
                 telegram_bot_sendtext(error)
-        # else:
-        #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
+        else:
+            print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
     if dirxn == 'sell':
         current_price = MT.Get_last_tick_info(instrument=pair)['bid']
         if current_price <= (positions['open_price'][positions['instrument'] == pair].values[0])-(atr_target*atr):
@@ -82,28 +82,19 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
             except:
                 error = MT.order_return_message
                 telegram_bot_sendtext(error)
-        # else:
-        #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
-print("Tanod is running....")
-higher_pnl = 0
-trade_count = 0
-heartbeat_list = [0,5,10,15,20, 25,30,35,40,45,50,55]
-while datetime.now().weekday() <= 5:
-    positions = MT.Get_all_open_positions()
-    pnl = positions['profit'].sum()
+        else:
+            print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
+
+positions = MT.Get_all_open_positions()
+print(positions)
+while datetime.now().weekday() <= 4:
     if len(positions) > 0:
-        basket_close(target=500, lot_based='yes', per_lot = 300)
-        time.sleep(1)
+        basket_close(target=500, lot_based='no', per_lot = 1)
+        asyncio.sleep(1)
         for currency in positions['instrument']:
-            break_even(pair = currency, atr_target = 6, amount = 0.3)
-            time.sleep(1)
+            break_even(pair = currency, atr_target = 2, amount = 0.2)
+            asyncio.sleep(1)
             check_news(pair)
-            if pnl > higher_pnl:
-                higher_pnl = pnl
-                print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))
-            elif len(positions) > trade_count:
-                trade_count = len(positions)
-                print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))   
     else:
         timestmp = datetime.now().strftime('%H:%M')
         print(timestmp + ' - No positions monitored.')
