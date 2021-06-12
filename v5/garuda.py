@@ -188,8 +188,8 @@ for line in range(0, len(df_raw)):
         rsi_score.append('ignore')     
 df_raw['RSI Trend'] = rsi_score
 
-df_raw.to_csv(home+'/Desktop/Experimental/v4/macdema_test.csv')
-telegram_bot_sendfile(filename='macdema_test.csv', location=home+'/Desktop/Experimental/v4/')
+df_raw.to_csv(home+'/Desktop/Experimental/v5/macdema_test.csv')
+telegram_bot_sendfile(filename='macdema_test.csv', location=home+'/Desktop/Experimental/v5/')
 
 #Filter to trade df
 to_trade_raw = df_raw[df_raw['Current MACD Trend'] != 'ignore']
@@ -230,7 +230,7 @@ for line in range(0, len(to_trade_final)):
         tp.append(0)
 to_trade_final['sl'] = sl
 to_trade_final['tp'] = tp
-to_trade_final.to_csv(home + '/Desktop/Experimental/v4/to_trade_final.csv')
+to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final.csv')
 
 positions = MT.Get_all_open_positions()
 all_pairs = set(list(positions['instrument']))
@@ -263,7 +263,7 @@ for currency in positions['instrument']:
     else:
         print(currency, ' is okay. ')
 
-styx_execute = os.popen('python3 ' + home + '/Desktop/Experimental/v4/river_styx.py').read()
+styx_execute = os.popen('python3 ' + home + '/Desktop/Experimental/v5/river_styx.py').read()
 
 if len(to_trade_final) == 0:
     telegram_bot_sendtext('Garuda no valid setup found.')
