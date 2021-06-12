@@ -68,8 +68,8 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
                 MT.Set_sl_and_tp_for_position(ticket=(positions['ticket'][positions['instrument']==pair].values[0]), stoploss=be_sl, takeprofit=0)
                 telegram_bot_sendtext(pair + ' (' + dirxn.upper() + ') hit 2ATR. Successfully moved SL to BE.')
             except:
-                error = MT.order_return_message
-                telegram_bot_sendtext(error)
+                error = MT.order_error
+                telegram_bot_sendtext('Error setting to BE. ' + error)
         # else:
         #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
     if dirxn == 'sell':
@@ -80,8 +80,8 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
                 MT.Set_sl_and_tp_for_position(ticket=(positions['ticket'][positions['instrument']==pair].values[0]), stoploss=be_sl, takeprofit=0)
                 telegram_bot_sendtext(pair + ' (' + dirxn.upper() + ') hit 2ATR. Successfully moved SL to BE.')
             except:
-                error = MT.order_return_message
-                telegram_bot_sendtext(error)
+                error = MT.order_error
+                telegram_bot_sendtext('Error setting to BE. ' + error)
         # else:
         #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
 print("Tanod is running....")
