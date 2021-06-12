@@ -44,14 +44,14 @@ for pair in list_symbols:
     symbols[pair] = pair
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
-# if datetime.now().weekday() > 4: #don't run on weekends
-#     exit()
-# elif datetime.now().weekday() <=0:
-#     exit()
-# elif datetime.now().weekday() == 1 and datetime.now().hour < 17:
-#     exit()
-# else:
-#     pass
+if datetime.now().weekday() > 4: #don't run on weekends
+    exit()
+elif datetime.now().weekday() <=0: #don't run on Mondays
+    exit()
+elif datetime.now().weekday() == 1 and datetime.now().hour < 17:
+    exit()
+else:
+    pass
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -230,7 +230,7 @@ for line in range(0, len(to_trade_final)):
         tp.append(0)
 to_trade_final['sl'] = sl
 to_trade_final['tp'] = tp
-to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final.csv')
+to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final_garuda.csv')
 
 positions = MT.Get_all_open_positions()
 all_pairs = set(list(positions['instrument']))
