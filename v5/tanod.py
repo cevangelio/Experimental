@@ -60,7 +60,6 @@ def basket_close(target=500, lot_based='no', per_lot = 1, shirt_protect = 'yes',
                 MT.Close_position_by_ticket(ticket=ticket)
             telegram_bot_sendtext('All positions closed. Shirt protect activated. Loss: ' + str(round(pnl, 2)))
 
-
 def break_even(pair, atr_target = 4, amount = 0.2, port=0):
     positions = MT.Get_all_open_positions()
     dirxn = positions['position_type'][positions['instrument'] == pair].values[0]
