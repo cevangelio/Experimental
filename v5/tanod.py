@@ -36,7 +36,7 @@ def telegram_bot_sendfile(filename, location):
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
 
-def basket_close(target=500, lot_based='no', per_lot = 1, port=0):
+def basket_close(target=500, lot_based='no', per_lot = 1, shirt_protect = 'yes', shirt_protect_amt = 2000, port=0):
     positions = MT.Get_all_open_positions()
     pnl = positions['profit'].sum()
     if lot_based == 'no':
@@ -44,8 +44,6 @@ def basket_close(target=500, lot_based='no', per_lot = 1, port=0):
             for ticket in positions['ticket']:
                 MT.Close_position_by_ticket(ticket=ticket)
             telegram_bot_sendtext('All positions closed. Basket target reached. Profit: ' + str(round(pnl, 2)))
-        # else:
-        #     print('Target profit not reached. Current PNL: ' + str(pnl))
     elif lot_based == 'yes':
         total_lot = positions['volume'].sum()
         target_x = total_lot*per_lot
@@ -53,8 +51,15 @@ def basket_close(target=500, lot_based='no', per_lot = 1, port=0):
             for ticket in positions['ticket']:
                 MT.Close_position_by_ticket(ticket=ticket)
             telegram_bot_sendtext('All positions closed. Basket target reached. Profit: ' + str(round(pnl, 2)))
-        # else:
-        #     print('Target profit not reached. Current PNL: ' + str(pnl))
+    else:
+        pass
+    
+    if shirt_protect == 'yes':
+        if pnl >= shirt_protect_amt:
+            for ticket in positions['ticket']:
+                MT.Close_position_by_ticket(ticket=ticket)
+            telegram_bot_sendtext('All positions closed. Shirt protect activated. Loss: ' + str(round(pnl, 2)))
+
 
 def break_even(pair, atr_target = 4, amount = 0.2, port=0):
     positions = MT.Get_all_open_positions()
@@ -70,8 +75,6 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
             except:
                 error = MT.order_error
                 telegram_bot_sendtext('Error setting to BE. ' + error)
-        # else:
-        #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
     elif dirxn == 'sell':
         current_price = MT.Get_last_tick_info(instrument=pair)['bid']
         if current_price <= (positions['open_price'][positions['instrument'] == pair].values[0])-(atr_target*atr):
@@ -82,8 +85,7 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
             except:
                 error = MT.order_error
                 telegram_bot_sendtext('Error setting to BE. ' + error)
-        # else:
-        #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
+
 print("Tanod is running....")
 higher_pnl = 0
 trade_count = 0
@@ -92,10 +94,10 @@ while datetime.now().weekday() <= 5:
     positions = MT.Get_all_open_positions()
     pnl = positions['profit'].sum()
     if len(positions) > 0:
-        basket_close(target=1500, lot_based='yes', per_lot = 300)
+        basket_close(target=1500, lot_based='yes', per_lot = 300, shirt_protect='yes', shirt_protect_amt=2000)
         time.sleep(1)
         for currency in positions['instrument']:
-            break_even(pair = currency, atr_target = 6, amount = 0.3)
+            break_even(pair = currency, atr_target = 4, amount = 0.4)
             time.sleep(1)
             check_news(pair)
             if pnl > higher_pnl:
