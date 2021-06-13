@@ -72,7 +72,7 @@ def break_even(pair, atr_target = 4, amount = 0.2, port=0):
                 telegram_bot_sendtext('Error setting to BE. ' + error)
         # else:
         #     print(pair + ' not yet reaching ' + str(atr_target) + ' ATR')
-    if dirxn == 'sell':
+    elif dirxn == 'sell':
         current_price = MT.Get_last_tick_info(instrument=pair)['bid']
         if current_price <= (positions['open_price'][positions['instrument'] == pair].values[0])-(atr_target*atr):
             be_sl = (positions['open_price'][positions['instrument'] == pair].values[0]) - (positions['open_price'][positions['instrument'] == pair].values[0])+(amount*atr)
@@ -92,7 +92,7 @@ while datetime.now().weekday() <= 5:
     positions = MT.Get_all_open_positions()
     pnl = positions['profit'].sum()
     if len(positions) > 0:
-        basket_close(target=500, lot_based='yes', per_lot = 300)
+        basket_close(target=1500, lot_based='yes', per_lot = 300)
         time.sleep(1)
         for currency in positions['instrument']:
             break_even(pair = currency, atr_target = 6, amount = 0.3)
