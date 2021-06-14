@@ -56,7 +56,7 @@ for currency in df_raw['Currency']:
     ema_l.append(ema)
     atr_raw = ta.atr(high = bars['high'], low = bars['low'], close = bars['close'],mamode = 'EMA')
     rsi_raw = ta.rsi(bars['close'], length = 14)
-    rsi_trend_raw = ta.rsi(bars['close'], length = 200)
+    rsi_trend_raw = ta.rsi(bars['close'], length = 100)
     bars['rsi'] = rsi_raw
     bars['rsi trend'] = rsi_trend_raw
     rsi = rsi_raw[len(bars)-1]
