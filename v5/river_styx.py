@@ -101,7 +101,7 @@ if len(currs_traded) > 0:
 to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final_styx.csv')
 
 if len(to_trade_final) == 0:
-    telegram_bot_sendtext('Styx no valid trade.')
+    telegram_bot_sendtext('Styx no valid setup found.')
 
 for pair in to_trade_final['Currency']:
     dirxn = to_trade_final['Styx Bias'][to_trade_final['Currency'] == pair].values[0]
