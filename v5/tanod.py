@@ -95,6 +95,8 @@ while datetime.now().weekday() <= 5:
     if len(positions) > 0:
         basket_close(target=1500, lot_based='yes', per_lot = 300, shirt_protect='yes', shirt_protect_amt=2000)
         time.sleep(1)
+        if datetime.now().minute == 1:
+            telegram_bot_sendtext(datetime.now().strftime('%H:%M'),' - Current PNL: ', str(round(pnl, 2)))
         for currency in positions['instrument']:
             break_even(pair = currency, atr_target = 4, amount = 0.4)
             time.sleep(1)
@@ -104,7 +106,7 @@ while datetime.now().weekday() <= 5:
                 print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))
             elif len(positions) > trade_count:
                 trade_count = len(positions)
-                print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))   
+                print(datetime.now().strftime('%H:%M') + " - Tanod is watching " + str(len(positions)) + " trade/s. Current PNL: " + str(round(positions['profit'].sum(), 2)))
     else:
         timestmp = datetime.now().strftime('%H:%M')
         print(timestmp + ' - No positions monitored.')
