@@ -98,8 +98,6 @@ for currency in to_trade_final['Currency']:
 if len(currs_traded) > 0:
     telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed. (STYX)')
 
-to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final_styx.csv')
-
 if len(to_trade_final) == 0:
     telegram_bot_sendtext('Styx no valid setup found.')
 
@@ -120,3 +118,6 @@ for pair in to_trade_final['Currency']:
             telegram_bot_sendtext(str(e))
     else:
         telegram_bot_sendtext('Styx valid setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
+
+to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final_styx.csv')
+

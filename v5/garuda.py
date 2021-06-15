@@ -188,9 +188,6 @@ for line in range(0, len(df_raw)):
         rsi_score.append('ignore')     
 df_raw['RSI Trend'] = rsi_score
 
-df_raw.to_csv(home+'/Desktop/Experimental/v5/macdema_test.csv')
-telegram_bot_sendfile(filename='macdema_test.csv', location=home+'/Desktop/Experimental/v5/')
-
 #Filter to trade df
 to_trade_raw = df_raw[df_raw['Current MACD Trend'] != 'ignore']
 to_trade_raw.reset_index(inplace = True)
@@ -230,7 +227,6 @@ for line in range(0, len(to_trade_final)):
         tp.append(0)
 to_trade_final['sl'] = sl
 to_trade_final['tp'] = tp
-to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final_garuda.csv')
 
 positions = MT.Get_all_open_positions()
 all_pairs = set(list(positions['instrument']))
@@ -288,4 +284,9 @@ for pair in to_trade_final['Currency']:
             telegram_bot_sendtext(str(e))
     else:
         telegram_bot_sendtext('Garuda setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
+
+df_raw.to_csv(home+'/Desktop/Experimental/v5/macdema_test.csv')
+telegram_bot_sendfile(filename='macdema_test.csv', location=home+'/Desktop/Experimental/v5/')
+to_trade_final.to_csv(home + '/Desktop/Experimental/v5/to_trade_final_garuda.csv')
+
 
