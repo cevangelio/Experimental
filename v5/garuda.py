@@ -12,8 +12,8 @@ strategy:
 6. shirt protect
 
 to do:
-3. SL = 3ATR but needs helper to track to SL BE
 6. only place limit orders
+7. add trade journal
 
 watcher rules
 - move sl to BE at 2ATR 
