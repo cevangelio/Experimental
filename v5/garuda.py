@@ -4,8 +4,8 @@
 
 strategy:
 
-1. MACD cross <buy = negative MACD> <sell = positive MACD>
-2. RSI <buy = above 50> <sell = below 50>
+1. MACd second filter (reverse above = sell, below = buy)
+2. RSI 14 <buy = oversold> <sell = overbought>, RSI 100 <sell below 50, buy above 50>
 3. TF = 4h
 4. TP = 2.5 ATR or RSI reverse (invisible)
 5. SL = SL reverse (invisible)
@@ -276,7 +276,7 @@ for pair in to_trade_final['Currency']:
     vol = 1
     if spread <= 10.0:
         try:
-            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment = 'garuda ' + timestmp)
+            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'garuda ' + timestmp)
             telegram_bot_sendtext('Garuda setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
             time.sleep(3)
         except Exception as e:
