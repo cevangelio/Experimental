@@ -153,7 +153,7 @@ if len(currs_traded) > 0:
 to_trade_final.reset_index(inplace=True)
 to_trade_final.drop(columns = 'index', inplace=True)
 print(to_trade_final)
-'''
+
 for currency in positions['instrument']:
     rsi_close = df_og['RSI H1'][df_og['Currency'] == currency].values[0]
     pnl = positions['profit'][positions['instrument'] == currency].values[0]
@@ -176,7 +176,7 @@ for pair in to_trade_final['Currency']:
     vol = 1
     if spread <= 10.0:
         try:
-            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'white_cerberus ' + timestmp)
             telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
             time.sleep(3)
         except Exception as e:
@@ -184,4 +184,3 @@ for pair in to_trade_final['Currency']:
             telegram_bot_sendtext(str(e))
     else:
         telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
-'''
