@@ -33,6 +33,11 @@ for pair in list_symbols:
     symbols[pair] = pair
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
+if datetime.now().weekday() > 4: #don't run on weekends
+    exit()
+else:
+    pass
+
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
 bot_token = t_gram_creds.readline().split('\n')[0]
