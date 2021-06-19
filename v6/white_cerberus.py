@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import requests
 import datetime
-from datetime import datetime
+from datetime import date, datetime
 import os
 import time
 from pathlib import Path
@@ -36,6 +36,8 @@ for pair in list_symbols:
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
 if datetime.now().weekday() > 4: #don't run on weekends
+    exit()
+if datetime.now().weekday() == 0 and datetime.now().hour < 5:
     exit()
 else:
     pass
