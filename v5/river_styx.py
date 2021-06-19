@@ -2,7 +2,7 @@
 
 '''
 if above 240ema in 4h - sell, vice versa (countertrend)
-entry is oversold (35 and below)/ oversold (65 and above)
+entry is oversold (35 and below)/ overbought (65 and above)
 exit is reverse of RSI (overbought or oversold)
 '''
 
