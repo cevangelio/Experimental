@@ -132,6 +132,7 @@ for tf in tfs:
     print(df)
     df_final['Action ' + tf] = np.array(df['Action'])
     df_final['RSI ' + tf] = np.array(df['RSI Status'])
+    df_final['RSI Value ' + tf] = np.array(df['rsi'])
 
 print(df_final)
 
@@ -160,21 +161,21 @@ for currency in to_trade_final['Currency']:
         currs_traded.append(currency)
 
 if len(currs_traded) > 0:
-    telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
+    telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from CERBERUS but have exceeded open positions allowed.')
 
 to_trade_final.reset_index(inplace=True)
 to_trade_final.drop(columns = 'index', inplace=True)
 print(to_trade_final)
 
 for currency in positions['instrument']:
-    rsi_close = df_og['RSI H1'][df_og['Currency'] == currency].values[0]
+    rsi_close = df_og['RSI Value D1'][df_og['Currency'] == currency].values[0]
     pnl = positions['profit'][positions['instrument'] == currency].values[0]
     if positions['position_type'][positions['instrument'] == currency].values[0] == 'sell':
-        if rsi_close == 'oversold':
+        if rsi_close <= 30:
             MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
             telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value oversold.')
     if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
-        if rsi_close == 'overbought':
+        if rsi_close >= 70:
             MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
             telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value bought.')        
     else:
