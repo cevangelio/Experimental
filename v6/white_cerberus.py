@@ -36,12 +36,12 @@ for pair in list_symbols:
     symbols[pair] = pair
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
-if datetime.now().weekday() > 4: #don't run on weekends
-    exit()
-if datetime.now().weekday() == 0 and datetime.now().hour < 5:
-    exit()
-else:
-    pass
+# if datetime.now().weekday() > 4: #don't run on weekends
+#     exit()
+# if datetime.now().weekday() == 0 and datetime.now().hour < 5:
+#     exit()
+# else:
+#     pass
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -101,9 +101,9 @@ def cerberus(tf='H1'):
     rsi_status = []
     for line in range(0, len(df_raw)):
         rsi_status_raw = df_raw['rsi'].loc[line]
-        if rsi_status_raw >= 65:
+        if 65 <= rsi_status_raw <= 69:
             rsi_status.append('overbought')
-        elif rsi_status_raw <= 35:
+        elif 35 >= rsi_status_raw >= 31:
             rsi_status.append('oversold')
         else:
             rsi_status.append('ignore')
@@ -129,9 +129,11 @@ df_final['Currency'] = list_symbols
 tfs = ['H1','H4','D1']
 for tf in tfs:
     df = cerberus(tf=tf)
-    # print(df)
+    print(df)
     df_final['Action ' + tf] = np.array(df['Action'])
     df_final['RSI ' + tf] = np.array(df['RSI Status'])
+
+print(df_final)
 
 df_og = df_final
 df_final = df_final[df_final['Action H1'] != 'ignore']
