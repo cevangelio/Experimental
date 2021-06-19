@@ -5,10 +5,11 @@ Strategy:
 2. RSI14 = overbought or oversold
 3. RSI100 = Trend
 
-buy+overbought = sell
-sell+oversold = buy
-buy+oversold = buy
-sell+overbought = sell
+reverse cerberus
+buy+overbought = buy
+sell+oversold = sell
+buy+oversold = sell
+sell+overbought = buy
 
 4. All 3 heads of cerberus should agree
 5. SL
