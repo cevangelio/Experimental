@@ -13,7 +13,7 @@ sell+overbought = sell
 4. All 3 heads of cerberus should agree
 5. SL
 
-test commit from vs - - double test
+test commit from vs - - triple test
 
 '''
 import numpy as np
