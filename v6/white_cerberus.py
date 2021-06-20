@@ -36,12 +36,12 @@ for pair in list_symbols:
     symbols[pair] = pair
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
-# if datetime.now().weekday() > 4: #don't run on weekends
-#     exit()
-# if datetime.now().weekday() == 0 and datetime.now().hour < 5:
-#     exit()
-# else:
-#     pass
+if datetime.now().weekday() > 4: #don't run on weekends
+    exit()
+if datetime.now().weekday() == 0 and datetime.now().hour < 5:
+    exit()
+else:
+    pass
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -153,13 +153,14 @@ df_final = df_final[df_final['Action H4'] != 'ignore']
 to_trade_final = df_final[df_final['Action D1'] != 'ignore']
 to_trade_final.reset_index(inplace = True)
 to_trade_final.drop(columns = 'index', inplace = True)
-print(to_trade_final)
+print('Filtered ignore currencies.')
+
 for line in range(0, len(to_trade_final)):
     if to_trade_final['Action H1'].loc[line] == to_trade_final['Action H4'].loc[line] == to_trade_final['Action D1'].loc[line]:
         print(to_trade_final['Currency'].loc[line], ' is good.')
     else:
         to_trade_final.drop([line], inplace=True)
-print(to_trade_final)
+print('Filtered disagreeing TFs.')
 
 positions = MT.Get_all_open_positions()
 all_pairs = set(list(positions['instrument']))
@@ -176,7 +177,7 @@ if len(currs_traded) > 0:
 
 to_trade_final.reset_index(inplace=True)
 to_trade_final.drop(columns = 'index', inplace=True)
-print(to_trade_final)
+print('Removed currencies with existing trades.')
 
 for currency in positions['instrument']:
     rsi_close = df_og['RSI Value D1'][df_og['Currency'] == currency].values[0]
@@ -198,8 +199,10 @@ for currency in positions['instrument']:
                 pass   
     else:
       print(currency, ' is okay. ')
+
 for pair in to_trade_final['Currency']:
     dirxn = to_trade_final['Action D1'][to_trade_final['Currency'] == pair].values[0]
+    journal_entry = []
     # sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
     # tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
