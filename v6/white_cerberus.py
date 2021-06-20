@@ -67,6 +67,7 @@ def cerberus(tf='H1'):
     current_price_l = []
     atr_l = []
     rsi_ov_l = []
+    rsi_ov_prev_l = []
     rsi_trend_l = []
     for currency in df_raw['Currency']:
         bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=600))
@@ -78,8 +79,10 @@ def cerberus(tf='H1'):
         atr_l.append(atr) 
         rsi_raw = ta.rsi(bars['close'], length = 14)
         bars['rsi'] = rsi_raw
-        rsi = rsi_raw[len(bars)-1]
+        rsi = rsi_raw[len(bars) -1]
         rsi_ov_l.append(rsi)
+        rsi_prev = rsi_raw[len(bars) -2]
+        rsi_ov_prev_l.append(rsi_prev)
         rsi_trend_raw = ta.rsi(bars['close'], length = 100)
         bars['rsi trend'] = rsi_trend_raw
         rsi_trend = rsi_trend_raw[len(bars)-1]
@@ -87,6 +90,7 @@ def cerberus(tf='H1'):
     df_raw['Current Price'] = current_price_l
     df_raw['atr'] = atr_l
     df_raw['rsi'] = rsi_ov_l
+    df_raw['rsi prev'] = rsi_ov_prev_l
     df_raw['rsi trend'] = rsi_trend_l
     rsi_score = []
     for line in range(0, len(df_raw)):
@@ -101,12 +105,18 @@ def cerberus(tf='H1'):
     rsi_status = []
     for line in range(0, len(df_raw)):
         rsi_status_raw = df_raw['rsi'].loc[line]
-        if 65 <= rsi_status_raw <= 69:
+        if rsi_status_raw >= 65:
             rsi_status.append('overbought')
-        elif 35 >= rsi_status_raw >= 31:
+        elif rsi_status_raw <= 35:
             rsi_status.append('oversold')
         else:
             rsi_status.append('ignore')
+        # if 65 <= rsi_status_raw <= 69:
+        #     rsi_status.append('overbought')
+        # elif 35 >= rsi_status_raw >= 31:
+        #     rsi_status.append('oversold')
+        # else:
+        #     rsi_status.append('ignore')
     df_raw['RSI Status'] = rsi_status
     trade_status = []
     for line in range(0, len(df_raw)):
@@ -133,6 +143,7 @@ for tf in tfs:
     df_final['Action ' + tf] = np.array(df['Action'])
     df_final['RSI ' + tf] = np.array(df['RSI Status'])
     df_final['RSI Value ' + tf] = np.array(df['rsi'])
+    df_final['RSI Value Prev ' + tf] = np.array(df['rsi prev'])
 
 print(df_final)
 
@@ -169,15 +180,22 @@ print(to_trade_final)
 
 for currency in positions['instrument']:
     rsi_close = df_og['RSI Value D1'][df_og['Currency'] == currency].values[0]
+    rsi_close_prev = df_og['RSI Value Prev D1'][df_og['Currency'] == currency].values[0]
     pnl = positions['profit'][positions['instrument'] == currency].values[0]
     if positions['position_type'][positions['instrument'] == currency].values[0] == 'sell':
         if rsi_close <= 30:
-            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-            telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value oversold.')
+            if rsi_close_prev < rsi_close:
+                MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value oversold.')
+            else:
+                pass
     if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
         if rsi_close >= 70:
-            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-            telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value bought.')        
+            if rsi_close_prev > rsi_close:
+                MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value bought.')
+            else:
+                pass   
     else:
       print(currency, ' is okay. ')
 for pair in to_trade_final['Currency']:
