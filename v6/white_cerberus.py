@@ -207,14 +207,14 @@ for pair in to_trade_final['Currency']:
     # tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
     timestmp = datetime.now().strftime('%H:%M')
+    magic_num = int(datetime.now().strftime('%Y%m%d%H%M%S'))
     vol = 1
     if spread <= 10.0:
-        try:
-            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'white_cerberus ' + timestmp)
+        order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment = 'white_cerberus ' + timestmp)
+        if order != -1:    
             telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
             time.sleep(3)
-        except Exception as e:
-            telegram_bot_sendtext('Cerberus setup found. Error opening position: ' + pair + ' (' + dirxn.upper() + ')')
-            telegram_bot_sendtext(str(e))
+        else:
+            telegram_bot_sendtext('Cerberus setup found. ' + MT.order_return_message + ' for ' + pair + ' (' + dirxn.upper() + ')')
     else:
         telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
