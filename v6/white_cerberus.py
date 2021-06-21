@@ -197,36 +197,44 @@ for currency in positions['instrument']:
     rsi_close = df_og['RSI Value D1'][df_og['Currency'] == currency].values[0]
     rsi_close_prev = df_og['RSI Value Prev D1'][df_og['Currency'] == currency].values[0]
     pnl = positions['profit'][positions['instrument'] == currency].values[0]
-    if positions['position_type'][positions['instrument'] == currency].values[0] == 'sell':
-        if rsi_close <= 30:
-            if rsi_close_prev < rsi_close:
+    blk_cer = positions['comment'][positions['instrument'] == currency].values[0]
+    if ('black_cerberus' in blk_cer) == False:
+        if positions['position_type'][positions['instrument'] == currency].values[0] == 'sell':
+            if rsi_close <= 30:
+                if rsi_close_prev < rsi_close:
+                    MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+                    trade(pair=currency, dirxn='buy', vol=1, tag='black_cerberus ')
+                    telegram_bot_sendtext(currency + ' position closed. Reverse position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
+                else:
+                    pass
+            elif rsi_close > 30:
                 MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
                 trade(pair=currency, dirxn='buy', vol=1, tag='black_cerberus ')
-                telegram_bot_sendtext(currency + ' position closed. Reverse position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
-            else:
-                pass
-        elif rsi_close > 30:
-            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-            trade(pair=currency, dirxn='buy', vol=1, tag='black_cerberus ')
-            telegram_bot_sendtext(currency + ' position closed. RSI REVERSED. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
-    if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
-        if rsi_close >= 70:
-            if rsi_close_prev > rsi_close:
+                telegram_bot_sendtext(currency + ' position closed. RSI REVERSED. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
+        if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
+            if rsi_close >= 70:
+                if rsi_close_prev > rsi_close:
+                    MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+                    trade(pair=currency, dirxn='sell', vol=1, tag='black_cerberus ')
+                    telegram_bot_sendtext(currency + ' position closed. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
+                else:
+                    pass
+            elif rsi_close < 70:
                 MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
                 trade(pair=currency, dirxn='sell', vol=1, tag='black_cerberus ')
-                telegram_bot_sendtext(currency + ' position closed. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
-            else:
-                pass
-        elif rsi_close < 70:
-            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-            trade(pair=currency, dirxn='sell', vol=1, tag='black_cerberus ')
-            telegram_bot_sendtext(currency + ' position closed. RSI REVERSED. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
+                telegram_bot_sendtext(currency + ' position closed. RSI REVERSED. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
+        else:
+            print(currency, ' is okay. ')
     else:
-      print(currency, ' is okay. ')
-time_exit=[5,13,17,1]
-if datetime.now().hour in time_exit:
-    print('Outside strategy trading hours. Exiting algo.')
-    exit()
+        if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy' and rsi_close >= 70:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+        elif positions['position_type'][positions['instrument'] == currency].values[0] == 'sell' and rsi_close <= 30:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+
+# time_exit=[5,13,17,1]
+# if datetime.now().hour in time_exit:
+#     print('Outside strategy trading hours. Exiting algo.')
+#     exit()
 
 if len(to_trade_final) == 0:
     telegram_bot_sendtext('Cerberus: No valid setup.')
