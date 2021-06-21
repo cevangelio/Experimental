@@ -133,6 +133,20 @@ def cerberus(tf='H1'):
     df_raw['Action'] = trade_status
     return df_raw
 
+def trade(pair,dirxn,vol,tag):
+    spread = MT.Get_last_tick_info(instrument=pair)['spread']
+    timestmp = datetime.now().strftime('%H:%M')
+    magic_num = int(datetime.now().strftime('%Y%m%d%H%M%S'))
+    if spread <= 10.0:
+        order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment = tag + timestmp)
+        if order != -1:    
+            telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
+            time.sleep(3)
+        else:
+            telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
+    else:
+        telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
+
 df_final = pd.DataFrame()
 df_final['Currency'] = list_symbols
 
@@ -180,7 +194,6 @@ to_trade_final.drop(columns = 'index', inplace=True)
 print('Removed currencies with existing trades.')
 
 for currency in positions['instrument']:
-    #add logic to close when not oversold or overbought anymore
     rsi_close = df_og['RSI Value D1'][df_og['Currency'] == currency].values[0]
     rsi_close_prev = df_og['RSI Value Prev D1'][df_og['Currency'] == currency].values[0]
     pnl = positions['profit'][positions['instrument'] == currency].values[0]
@@ -188,18 +201,32 @@ for currency in positions['instrument']:
         if rsi_close <= 30:
             if rsi_close_prev < rsi_close:
                 MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + 'Prev: ' + str(round(rsi_close_prev,2)) + '.')
+                trade(pair=currency, dirxn='buy', vol=1, tag='black_cerberus ')
+                telegram_bot_sendtext(currency + ' position closed. Reverse position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
             else:
                 pass
+        elif rsi_close > 30:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+            trade(pair=currency, dirxn='buy', vol=1, tag='black_cerberus ')
+            telegram_bot_sendtext(currency + ' position closed. RSI REVERSED. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
     if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
         if rsi_close >= 70:
             if rsi_close_prev > rsi_close:
                 MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + 'Prev: ' + str(round(rsi_close_prev,2)) + '.')
+                trade(pair=currency, dirxn='sell', vol=1, tag='black_cerberus ')
+                telegram_bot_sendtext(currency + ' position closed. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
             else:
-                pass   
+                pass
+        elif rsi_close < 70:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+            trade(pair=currency, dirxn='sell', vol=1, tag='black_cerberus ')
+            telegram_bot_sendtext(currency + ' position closed. RSI REVERSED. Reversed position opened. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + ' Prev: ' + str(round(rsi_close_prev,2)) + '.')
     else:
       print(currency, ' is okay. ')
+time_exit=[5,13,17,1]
+if datetime.now().hour in time_exit:
+    print('Outside strategy trading hours. Exiting algo.')
+    exit()
 
 if len(to_trade_final) == 0:
     telegram_bot_sendtext('Cerberus: No valid setup.')
