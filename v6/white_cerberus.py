@@ -180,6 +180,7 @@ to_trade_final.drop(columns = 'index', inplace=True)
 print('Removed currencies with existing trades.')
 
 for currency in positions['instrument']:
+    #add logic to close when not oversold or overbought anymore
     rsi_close = df_og['RSI Value D1'][df_og['Currency'] == currency].values[0]
     rsi_close_prev = df_og['RSI Value Prev D1'][df_og['Currency'] == currency].values[0]
     pnl = positions['profit'][positions['instrument'] == currency].values[0]
@@ -187,18 +188,21 @@ for currency in positions['instrument']:
         if rsi_close <= 30:
             if rsi_close_prev < rsi_close:
                 MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value oversold.')
+                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + 'Prev: ' + str(round(rsi_close_prev,2)) + '.')
             else:
                 pass
     if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
         if rsi_close >= 70:
             if rsi_close_prev > rsi_close:
                 MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value bought.')
+                telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value: ' + str(round(rsi_close,2)) + 'Prev: ' + str(round(rsi_close_prev,2)) + '.')
             else:
                 pass   
     else:
       print(currency, ' is okay. ')
+
+if len(to_trade_final) == 0:
+    telegram_bot_sendtext('Cerberus: No valid setup.')
 
 for pair in to_trade_final['Currency']:
     dirxn = to_trade_final['Action D1'][to_trade_final['Currency'] == pair].values[0]
@@ -215,6 +219,6 @@ for pair in to_trade_final['Currency']:
             telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
             time.sleep(3)
         else:
-            telegram_bot_sendtext('Cerberus setup found. ' + MT.order_return_message + ' for ' + pair + ' (' + dirxn.upper() + ')')
+            telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
     else:
         telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
