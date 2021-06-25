@@ -4,8 +4,8 @@
 
 strategy:
 
-1. MACd second filter (reverse above = sell, below = buy)
-2. RSI 14 <buy = oversold> <sell = overbought>, RSI 100 <sell below 50, buy above 50>
+1. Macd - same setting, only use current when signal below macd
+2. 3 bars should be oversold/overbought --- RSI 14 <buy = oversold> <sell = overbought>, RSI 100 <sell below 50, buy above 50>
 3. TF = 4h
 4. TP = 2.5 ATR or RSI reverse (invisible)
 5. SL = SL reverse (invisible)

@@ -70,7 +70,7 @@ def cerberus(tf='H1'):
     rsi_ov_prev_l = []
     rsi_trend_l = []
     for currency in df_raw['Currency']:
-        bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=600))
+        bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=1400))
         current_price = bars['close'].loc[len(bars) - 1]
         current_price_l.append(current_price)
         atr_raw = ta.atr(high = bars['high'], low = bars['low'], close = bars['close'],mamode = 'EMA')
