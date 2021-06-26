@@ -13,16 +13,13 @@ sell+overbought = sell
 5. SL
 
 '''
-import numpy as np
 import pandas as pd
 import requests
 import datetime
 from datetime import date, datetime
-import os
 import time
 from pathlib import Path
 import pandas_ta as ta
-from get_signal import *
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
 port = 1122 #FXCM MAIN 50k 1:100
