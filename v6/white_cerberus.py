@@ -250,10 +250,4 @@ for pair in to_trade_final['Currency']:
     vol = 1
     if spread <= 10.0:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment = 'white_cerberus ' + timestmp)
-        if order != -1:    
-            telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
-            time.sleep(3)
-        else:
-            telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
-    else:
-        telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
+        
