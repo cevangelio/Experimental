@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import requests
 import datetime
-from datetime import datetime
+from datetime import date, datetime
 import os
 import time
 from pathlib import Path
@@ -55,10 +55,14 @@ def cerberus(tf='H1'):
     df_raw['Currency'] = list_symbols
     current_price_l = []
     atr_l = []
+    atr_prev_l = []
+    atr_delta_l = []
     rsi_ov_l = []
     rsi_ov_prev_l = []
     rsi_trend_l = []
     rsi_trend_prev_l = []
+    macd_l = []
+    macd_signal_l = []
     for currency in df_raw['Currency']:
         bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=600))
         current_price = bars['close'].loc[len(bars) - 1]
@@ -66,7 +70,11 @@ def cerberus(tf='H1'):
         atr_raw = ta.atr(high = bars['high'], low = bars['low'], close = bars['close'],mamode = 'EMA')
         bars['atr'] = atr_raw
         atr = atr_raw[len(bars) - 1] #last value
-        atr_l.append(atr) 
+        atr_l.append(atr)
+        atr_prev = atr_raw[len(bars) - 2]
+        atr_prev_l.append(atr_prev)
+        atr_delta = (((bars['atr'].loc[len(bars) - 1]) - (bars['atr'].loc[len(bars) - 2]))/bars['atr'].loc[len(bars) - 2])*100
+        atr_delta_l.append(round(atr_delta, 2))
         rsi_raw = ta.rsi(bars['close'], length = 14)
         bars['rsi'] = rsi_raw
         rsi = rsi_raw[len(bars)-1]
@@ -79,8 +87,33 @@ def cerberus(tf='H1'):
         rsi_trend_l.append(rsi_trend)
         rsi_trend_prev = rsi_trend_raw[len(bars)-2]
         rsi_trend_prev_l.append(rsi_trend_prev)
+        macd_raw = ta.macd(bars['close'])
+        macd_final = pd.concat([bars,macd_raw], axis=1, join='inner')
+        macd_curr = macd_final.loc[len(bars) - 1]['MACD_12_26_9']
+        macd_l.append(macd_curr)
+        macd_signal_curr = macd_final.loc[len(bars) - 1]['MACDs_12_26_9']
+        macd_signal_l.append(macd_signal_curr)
     df_raw['Current Price'] = current_price_l
     df_raw['atr'] = atr_l
+    df_raw['atr prev'] = atr_prev_l
+    df_raw['atr delta'] = atr_delta_l
+    df_raw['MACD'] = macd_l
+    df_raw['MACD SIGNAL'] = macd_signal_l
+    macd_trend = []
+    for line in range(0, len(df_raw)):
+        if df_raw['MACD'].loc[line] < 0 and df_raw['MACD SIGNAL'].loc[line] < 0:
+            if df_raw['MACD'].loc[line] > df_raw['MACD SIGNAL'].loc[line]:
+                macd_trend.append('buy')
+            else:
+                macd_trend.append('ignore')
+        elif df_raw['MACD'].loc[line] > 0 and df_raw['MACD SIGNAL'].loc[line] > 0:
+            if df_raw['MACD'].loc[line] < df_raw['MACD SIGNAL'].loc[line]:
+                macd_trend.append('sell')
+            else:
+                macd_trend.append('ignore')
+        else:
+            macd_trend.append('ignore')
+    df_raw['Current MACD Trend'] = macd_trend
     df_raw['rsi prev'] = rsi_ov_prev_l
     df_raw['rsi'] = rsi_ov_l
     df_raw['rsi trend prev'] = rsi_trend_prev_l
@@ -120,6 +153,7 @@ def cerberus(tf='H1'):
         else:
             trade_status.append('ignore')
     df_raw['Action'] = trade_status
+    df_raw['comment'] = [('CBRUS'+df_raw['Currency'].loc[line]+datetime.now().strftime('%Y%m%d%H%M%S')) for line in range(0, len(df_raw))]
     return df_raw
 
 df_final = pd.DataFrame()
@@ -149,35 +183,37 @@ if len(currs_traded) > 0:
 to_trade_final.reset_index(inplace=True)
 to_trade_final.drop(columns = 'index', inplace=True)
 print(to_trade_final)
+df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
+df_journal.append(to_trade_final)
+df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 
-# for currency in positions['instrument']:
-#     rsi_close = df_og['RSI H1'][df_og['Currency'] == currency].values[0]
-#     pnl = positions['profit'][positions['instrument'] == currency].values[0]
-#     if positions['position_type'][positions['instrument'] == currency].values[0] == 'sell':
-#         if rsi_close == 'oversold':
-#             MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-#             telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value oversold.')
-#     if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
-#         if rsi_close == 'overbought':
-#             MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-#             telegram_bot_sendtext(currency + ' position closed. PNL: ' + str(pnl) + '. RSI value bought.')        
-#     else:
-#       print(currency, ' is okay. ')
+for currency in positions['instrument']:
+    rsi_close = df_og['rsi'][df_og['Currency'] == currency].values[0]
+    pnl = positions['profit'][positions['instrument'] == currency].values[0]
+    if positions['position_type'][positions['instrument'] == currency].values[0] == 'sell':
+        if rsi_close <= 30:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+            telegram_bot_sendtext(currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
+    if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
+        if rsi_close >= 70:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+            telegram_bot_sendtext(currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))        
+    else:
+      print(currency, ' is okay. ')
 
 for pair in to_trade_final['Currency']:
     dirxn = to_trade_final['Action'][to_trade_final['Currency'] == pair].values[0]
     # sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
     # tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
-    timestmp = datetime.now().strftime('%H:%M')
+    coms = to_trade_final['comment'][to_trade_final['Currency'] == pair].values[0]
     vol = 1
     if spread <= 10.0:
-        try:
-            MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment = 'cerberus ' + timestmp)
+        order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms)
+        if order != -1:    
             telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
             time.sleep(3)
-        except Exception as e:
-            telegram_bot_sendtext('Cerberus setup found. Error opening position: ' + pair + ' (' + dirxn.upper() + ')')
-            telegram_bot_sendtext(str(e))
+        else:
+            telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
     else:
         telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
