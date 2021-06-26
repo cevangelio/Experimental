@@ -134,10 +134,10 @@ def cerberus(tf='H1'):
             rsi_status.append('sell')
         elif rsi_status_raw_prev <= 30 and rsi_status_raw > 30:
             rsi_status.append('buy')
-        elif rsi_status_raw_prev >= 50 and rsi_status_raw < 50:
-            rsi_status.append('sell')
-        elif rsi_status_raw_prev <= 50 and rsi_status_raw > 50:
-            rsi_status.append('buy')
+        # elif rsi_status_raw_prev >= 50 and rsi_status_raw < 50:
+        #     rsi_status.append('sell')
+        # elif rsi_status_raw_prev <= 50 and rsi_status_raw > 50:
+        #     rsi_status.append('buy')
         else:
             rsi_status.append('ignore')
     df_raw['RSI 14'] = rsi_status
