@@ -158,6 +158,9 @@ df_final['Currency'] = list_symbols
 
 df_final = cerberus(tf='H4')
 print(df_final)
+df_final.to_csv('d:/TradeJournal/cerberus_raw.csv', index=False)
+telegram_bot_sendfile('cerberus_raw.csv',location='d:/TradeJournal/')
+
 
 df_og = df_final
 to_trade_final = df_final[df_final['Action'] != 'ignore']
@@ -180,9 +183,12 @@ if len(currs_traded) > 0:
 to_trade_final.reset_index(inplace=True)
 to_trade_final.drop(columns = 'index', inplace=True)
 print(to_trade_final)
-df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
-df_journal.append(to_trade_final)
-df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
+if len(to_trade_final) == 0:
+    telegram_bot_sendtext('No valid setup found. ')
+else:
+    df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
+    df_journal.append(to_trade_final)
+    df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 
 for currency in positions['instrument']:
     rsi_close = df_og['rsi'][df_og['Currency'] == currency].values[0]
