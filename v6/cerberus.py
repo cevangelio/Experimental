@@ -74,21 +74,21 @@ def cerberus(tf='H1'):
         atr_delta_l.append(round(atr_delta, 2))
         rsi_raw = ta.rsi(bars['close'], length = 14)
         bars['rsi'] = rsi_raw
-        rsi = rsi_raw[len(bars)-1]
+        rsi = rsi_raw[len(bars)-2]
         rsi_ov_l.append(rsi)
-        rsi_prev = rsi_raw[len(bars)-2]
+        rsi_prev = rsi_raw[len(bars)-3]
         rsi_ov_prev_l.append(rsi_prev)
         rsi_trend_raw = ta.rsi(bars['close'], length = 100)
         bars['rsi trend'] = rsi_trend_raw
-        rsi_trend = rsi_trend_raw[len(bars)-1]
+        rsi_trend = rsi_trend_raw[len(bars)-2]
         rsi_trend_l.append(rsi_trend)
-        rsi_trend_prev = rsi_trend_raw[len(bars)-2]
+        rsi_trend_prev = rsi_trend_raw[len(bars)-3]
         rsi_trend_prev_l.append(rsi_trend_prev)
         macd_raw = ta.macd(bars['close'])
         macd_final = pd.concat([bars,macd_raw], axis=1, join='inner')
-        macd_curr = macd_final.loc[len(bars) - 1]['MACD_12_26_9']
+        macd_curr = macd_final.loc[len(bars) - 2]['MACD_12_26_9']
         macd_l.append(macd_curr)
-        macd_signal_curr = macd_final.loc[len(bars) - 1]['MACDs_12_26_9']
+        macd_signal_curr = macd_final.loc[len(bars) - 2]['MACDs_12_26_9']
         macd_signal_l.append(macd_signal_curr)
     df_raw['Current Price'] = current_price_l
     df_raw['atr'] = atr_l
@@ -119,9 +119,9 @@ def cerberus(tf='H1'):
     for line in range(0, len(df_raw)):
         rsi_score_raw = df_raw['rsi trend'].loc[line]
         rsi_score_raw_prev = df_raw['rsi trend prev'].loc[line]
-        if rsi_score_raw > rsi_score_raw_prev:
+        if rsi_score_raw > 50:
             rsi_trend_logic.append('buy')
-        elif rsi_score_raw < rsi_score_raw_prev:
+        elif rsi_score_raw < 50:
             rsi_trend_logic.append('sell')
         else:
             rsi_trend_logic.append('ignore')     
@@ -134,23 +134,37 @@ def cerberus(tf='H1'):
             rsi_status.append('sell')
         elif rsi_status_raw_prev <= 30 and rsi_status_raw > 30:
             rsi_status.append('buy')
-        # elif rsi_status_raw_prev >= 50 and rsi_status_raw < 50:
-        #     rsi_status.append('sell')
-        # elif rsi_status_raw_prev <= 50 and rsi_status_raw > 50:
-        #     rsi_status.append('buy')
+        elif rsi_status_raw_prev >= 50 and rsi_status_raw < 50:
+            rsi_status.append('sell')
+        elif rsi_status_raw_prev <= 50 and rsi_status_raw > 50:
+            rsi_status.append('buy')
         else:
             rsi_status.append('ignore')
     df_raw['RSI 14'] = rsi_status
     trade_status = []
     for line in range(0, len(df_raw)):
-        if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy':
+        if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['Current MACD Trend'].loc[line] == 'buy':
             trade_status.append('buy')
-        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell':
+        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['Current MACD Trend'].loc[line] == 'sell':
             trade_status.append('sell')
         else:
             trade_status.append('ignore')
     df_raw['Action'] = trade_status
     df_raw['comment'] = [('CBRUS'+df_raw['Currency'].loc[line]+datetime.now().strftime('%Y%m%d%H%M%S')) for line in range(0, len(df_raw))]
+    sl = []
+    tp = []
+    for line in range(0, len(df_raw)):
+        if df_raw['Action'].loc[line] == 'buy':
+            sl.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
+            tp.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
+        elif df_raw['Action'].loc[line] == 'sell':
+            sl.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
+            tp.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
+        else:
+            sl.append(0)
+            tp.append(0)
+    df_raw['sl'] = sl
+    df_raw['tp'] = tp
     return df_raw
 
 df_final = pd.DataFrame()
@@ -187,7 +201,7 @@ if len(to_trade_final) == 0:
     telegram_bot_sendtext('No valid setup found. ')
 else:
     df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
-    df_journal.append(to_trade_final)
+    df_journal = df_journal.append(to_trade_final)
     df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 
 for currency in positions['instrument']:
@@ -206,13 +220,13 @@ for currency in positions['instrument']:
 
 for pair in to_trade_final['Currency']:
     dirxn = to_trade_final['Action'][to_trade_final['Currency'] == pair].values[0]
-    # sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
-    # tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
+    sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
+    tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
     coms = to_trade_final['comment'][to_trade_final['Currency'] == pair].values[0]
     vol = 1
     if spread <= 10.0:
-        order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms)
+        order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
         if order != -1:    
             telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
             time.sleep(3)

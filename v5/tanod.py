@@ -93,7 +93,7 @@ while datetime.now().weekday() <= 5:
     positions = MT.Get_all_open_positions()
     pnl = positions['profit'].sum()
     if len(positions) > 0:
-        basket_close(target=1500, lot_based='yes', per_lot = 300, shirt_protect='yes', shirt_protect_amt=2000)
+        basket_close(target=2800, lot_based='yes', per_lot = 300, shirt_protect='yes', shirt_protect_amt=2000)
         time.sleep(1)
         if datetime.now().minute == 1:
             telegram_bot_sendtext(datetime.now().strftime('%H:%M'),' - Current PNL: ', str(round(pnl, 2)))
