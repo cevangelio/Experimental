@@ -94,16 +94,16 @@ df_raw['datetime'] = [time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch_ti
 sl = []
 tp = []
 for line in range(0, len(df_raw)):
-    if df_raw['Action'].loc[line] == 'buy':
-        sl.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
-        tp.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
-    elif df_raw['Action'].loc[line] == 'sell':
-        sl.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
-        tp.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
+    if df_raw['Action'].loc[line] == 1:
+        sl.append(df_raw['open'].loc[line+1] - (3*(df_raw['atr'].loc[line])))
+        tp.append(df_raw['open'].loc[line+1] + (3*(df_raw['atr'].loc[line])))
+    elif df_raw['Action'].loc[line] == -1:
+        sl.append(df_raw['open'].loc[line+1] + (3*(df_raw['atr'].loc[line])))
+        tp.append(df_raw['open'].loc[line+1] - (3*(df_raw['atr'].loc[line])))
     else:
         sl.append(0)
         tp.append(0)
 df_raw['sl'] = sl
 df_raw['tp'] = tp
 print(len(df_raw[df_raw['Action'] != 0]))
-print(df_raw)
+print(df_raw[df_raw['Action'] != 0])
