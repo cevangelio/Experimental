@@ -13,15 +13,32 @@ for pair in list_symbols:
     symbols[pair] = pair
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
-# def backtest(df):
-#     total_trades = len(df[df['Action'] !=0])
-#     for line in range(0, len(df)):
-#         if df['Action'].loc[line].values[0] != 0: #buy
-#             open_price = df['open'].loc[line].values[0]
-#             sl = df[]
-
-
-#     return total_trades, win_trades, loss_trade
+def backtest(df):
+    total_trades = len(df[df['Action'] !=0])
+    win_trades = 0
+    loss_trades = 0
+    for line in range(0, len(df)):
+        if df['Action'].loc[line].values[0] != 0:
+            open_price = 0
+            sl = df['sl'].loc[line].values[0]
+            tp = df['tp'].loc[line].values[0]
+            if df['Action'].loc[line].values[0] == 1:
+                while open_price < tp or open_price > sl:
+                    open_price = df['open'].loc[line + 1].values[0]
+                else:
+                    if open_price > tp:
+                        win_trades = win_trades + 1
+                    elif open_price < sl:
+                        loss_trade = loss_trade + 1
+            elif df['Action'].loc[line].values[0] == -1:
+                while open_price > tp or open_price < sl:
+                    open_price = df['open'].loc[line + 1].values[0]
+                else:
+                    if open_price < tp:
+                        win_trades = win_trades + 1
+                    elif open_price > sl:
+                        loss_trades = loss_trade + 1
+    return total_trades, win_trades, loss_trades
 
 currency = 'EURUSD'
 tf = 'D1'
@@ -107,3 +124,6 @@ df_raw['sl'] = sl
 df_raw['tp'] = tp
 print(len(df_raw[df_raw['Action'] != 0]))
 print(df_raw[df_raw['Action'] != 0])
+
+total_trade, win, lost = backtest(df=df_raw)
+print(str(total_trade), ' total trades taken.\n', str(win), ' hit TP.\n', str(lost), ' hit SL.\n', (str(round((win/total_trade)*100), 2)), ' win rate.')
