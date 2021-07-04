@@ -13,12 +13,15 @@ for pair in list_symbols:
     symbols[pair] = pair
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
-def backtest(df):
-    total_trades = len(df[df['Action'] !=0])
-    for line in range(0, len(df)):
-        if df['Action'].loc[line].values[0] == 1:
-            print(x_bars)
-    return total_trades, win_trades, loss_trade
+# def backtest(df):
+#     total_trades = len(df[df['Action'] !=0])
+#     for line in range(0, len(df)):
+#         if df['Action'].loc[line].values[0] != 0: #buy
+#             open_price = df['open'].loc[line].values[0]
+#             sl = df[]
+
+
+#     return total_trades, win_trades, loss_trade
 
 currency = 'EURUSD'
 tf = 'D1'
@@ -62,7 +65,6 @@ for line in range(1, len(df_raw)):
         rsi_trend_logic.append('ignore')
 rsi_trend_logic.insert(0, 'ignore')
 df_raw['RSI 100'] = rsi_trend_logic
-
 rsi_status = []
 for line in range(1, len(df_raw)):
     rsi_status_raw = df_raw['rsi'].loc[line]
@@ -89,5 +91,19 @@ for line in range(0, len(df_raw)):
         trade_status.append(0)
 df_raw['Action'] = trade_status
 df_raw['datetime'] = [time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch_time)) for epoch_time in df_raw['date']]
+sl = []
+tp = []
+for line in range(0, len(df_raw)):
+    if df_raw['Action'].loc[line] == 'buy':
+        sl.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
+        tp.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
+    elif df_raw['Action'].loc[line] == 'sell':
+        sl.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
+        tp.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
+    else:
+        sl.append(0)
+        tp.append(0)
+df_raw['sl'] = sl
+df_raw['tp'] = tp
 print(len(df_raw[df_raw['Action'] != 0]))
 print(df_raw)
