@@ -167,6 +167,13 @@ def cerberus(tf='H1'):
     df_raw['tp'] = tp
     return df_raw
 
+if datetime.now().weekday() > 5: #don't run on weekends
+    exit()
+elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
+    exit()
+else:
+    pass
+
 df_final = pd.DataFrame()
 df_final['Currency'] = list_symbols
 
