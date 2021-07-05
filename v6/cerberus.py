@@ -194,9 +194,10 @@ all_pairs = set(list(positions['instrument']))
 currs_traded =[]
 for currency in to_trade_final['Currency']:
     if currency in all_pairs:
-        curr_index = to_trade_final[to_trade_final['Currency'] == currency].index.values[0]
-        to_trade_final.drop([curr_index], inplace=True)
-        currs_traded.append(currency)
+        if positions['volume'][positions['instrument'] == currency].sum() > 2:
+            curr_index = to_trade_final[to_trade_final['Currency'] == currency].index.values[0]
+            to_trade_final.drop([curr_index], inplace=True)
+            currs_traded.append(currency)
 
 if len(currs_traded) > 0:
     telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
