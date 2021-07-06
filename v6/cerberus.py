@@ -156,10 +156,10 @@ def cerberus(tf='H1'):
     for line in range(0, len(df_raw)):
         if df_raw['Action'].loc[line] == 'buy':
             sl.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
-            tp.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
+            tp.append(df_raw['Current Price'].loc[line] + (5*(df_raw['atr'].loc[line])))
         elif df_raw['Action'].loc[line] == 'sell':
             sl.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
-            tp.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
+            tp.append(df_raw['Current Price'].loc[line] - (5*(df_raw['atr'].loc[line])))
         else:
             sl.append(0)
             tp.append(0)
