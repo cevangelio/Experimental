@@ -12,6 +12,10 @@ sell+overbought = sell
 
 5. SL
 
+to do:
+
+add checker for too high spread atr based
+
 '''
 import pandas as pd
 import requests
@@ -155,16 +159,17 @@ def cerberus(tf='H1'):
     tp = []
     for line in range(0, len(df_raw)):
         if df_raw['Action'].loc[line] == 'buy':
-            sl.append(df_raw['Current Price'].loc[line] - (3*(df_raw['atr'].loc[line])))
-            tp.append(df_raw['Current Price'].loc[line] + (5*(df_raw['atr'].loc[line])))
+            sl.append((df_raw['Current Price'].loc[line]) - (3*(df_raw['atr'].loc[line])))
+            tp.append((df_raw['Current Price'].loc[line]) + (5*(df_raw['atr'].loc[line])))
         elif df_raw['Action'].loc[line] == 'sell':
-            sl.append(df_raw['Current Price'].loc[line] + (3*(df_raw['atr'].loc[line])))
-            tp.append(df_raw['Current Price'].loc[line] - (5*(df_raw['atr'].loc[line])))
+            sl.append((df_raw['Current Price'].loc[line]) + (3*(df_raw['atr'].loc[line])))
+            tp.append((df_raw['Current Price'].loc[line]) - (5*(df_raw['atr'].loc[line])))
         else:
             sl.append(0)
             tp.append(0)
     df_raw['sl'] = sl
     df_raw['tp'] = tp
+    df_raw['spread'] = [MT.Get_last_tick_info(instrument=pair)['spread'] for pair in df_raw['Currency']]
     return df_raw
 
 if datetime.now().weekday() > 5: #don't run on weekends
@@ -227,13 +232,15 @@ for currency in positions['instrument']:
       print(currency, ' is okay. ')
 
 for pair in to_trade_final['Currency']:
+    current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
+    atr_now = to_trade_final['atr'][to_trade_final['Currency'] == pair].values[0]
     dirxn = to_trade_final['Action'][to_trade_final['Currency'] == pair].values[0]
     sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
     tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
     coms = to_trade_final['comment'][to_trade_final['Currency'] == pair].values[0]
     vol = 1
-    if spread <= 10.0:
+    if spread <= 13.0:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
         if order != -1:    
             telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
@@ -241,4 +248,16 @@ for pair in to_trade_final['Currency']:
         else:
             telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
     else:
-        telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + '), spread: ' + str(spread))
+        limit_price = 0
+        sloss_limit = 0
+        if dirxn == 'buy':
+            limit_price = current_price - atr_now
+            sloss_limit = limit_price - (3*atr_now)
+        elif dirxn == 'sell':
+            limit_price = current_price + atr_now
+            sloss_limit = limit_price + (3*atr_now)
+        limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss_limit, takeprofit=tprof, comment =coms)
+        if limit_order != -1:
+            telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
+        else:
+            telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
