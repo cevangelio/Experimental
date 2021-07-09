@@ -24,13 +24,6 @@ df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
 df_close_positions = MT.Get_all_closed_positions()
 df_close_journal = pd.DataFrame()
 
-# pd.read_csv('d:/TradeJournal/X_trade_journal.csv')
-
-#iterate from journal done
-#get all data needed [results,PNL, open, close, duration] done
-#append completed info to x_journal 
-#delete completed in df_journal done
-
 result = []
 pnl = []
 open_time = []
@@ -69,5 +62,5 @@ for line in to_remove:
 df_journal.drop(columns=['results', 'PNL', 'Open', 'Close', 'Duration'], inplace=True)
 df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 df_close_journal_prev = pd.read_csv('d:/TradeJournal/X_trade_journal.csv')
-df_close_journal_prev.append(df_close_journal)
+df_close_journal_prev = df_close_journal_prev.append(df_close_journal)
 df_close_journal_prev.to_csv('d:/TradeJournal/X_trade_journal.csv', index=False)

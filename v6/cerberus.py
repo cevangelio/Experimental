@@ -1,20 +1,13 @@
 '''
 Strategy:
 
-1. H4
+1. TF = H4
 2. RSI14 = cross from oversold to normal (vice versa)
-3. RSI100 = previous comparison
+3. RSI100 = below50 = sell, above50 = buy
+4. MACD
 
-buy+overbought = sell
-sell+oversold = buy
-buy+oversold = buy
-sell+overbought = sell
-
-5. SL
-
-to do:
-
-add checker for too high spread atr based
+5. SL = 3ATR
+6. Exit = overbought or oversold or TP (5ATR) or basketclose (3K)
 
 '''
 import pandas as pd
@@ -122,7 +115,6 @@ def cerberus(tf='H1'):
     rsi_trend_logic = []
     for line in range(0, len(df_raw)):
         rsi_score_raw = df_raw['rsi trend'].loc[line]
-        rsi_score_raw_prev = df_raw['rsi trend prev'].loc[line]
         if rsi_score_raw > 50:
             rsi_trend_logic.append('buy')
         elif rsi_score_raw < 50:
@@ -186,7 +178,6 @@ df_final = cerberus(tf='H4')
 print(df_final)
 df_final.to_csv('d:/TradeJournal/cerberus_raw.csv', index=False)
 telegram_bot_sendfile('cerberus_raw.csv',location='d:/TradeJournal/')
-
 
 df_og = df_final
 to_trade_final = df_final[df_final['Action'] != 'ignore']
