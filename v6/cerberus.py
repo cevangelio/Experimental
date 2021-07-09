@@ -244,6 +244,7 @@ for pair in to_trade_final['Currency']:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
         if order != -1:    
             telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
+            telegram_bot_sendtext('Price: ' + str(round(current_price, 5)) + ', SL: ' + str(round(sloss, 5)) + ', TP: ' + str(round(tprof, 5)))
             time.sleep(3)
         else:
             telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
@@ -259,5 +260,7 @@ for pair in to_trade_final['Currency']:
         limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss_limit, takeprofit=tprof, comment =coms)
         if limit_order != -1:
             telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
+            telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)) + ', TP: ' + str(round(tprof, 5)))
         else:
             telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
+            telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)))
