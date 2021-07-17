@@ -16,6 +16,8 @@ import datetime
 from datetime import date, datetime
 import time
 from pathlib import Path
+
+from requests.sessions import TooManyRedirects
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
@@ -151,10 +153,10 @@ def cerberus(tf='H1'):
     tp = []
     for line in range(0, len(df_raw)):
         if df_raw['Action'].loc[line] == 'buy':
-            sl.append((df_raw['Current Price'].loc[line]) - (3*(df_raw['atr'].loc[line])))
+            sl.append((df_raw['Current Price'].loc[line]) - (3.3*(df_raw['atr'].loc[line])))
             tp.append((df_raw['Current Price'].loc[line]) + (5*(df_raw['atr'].loc[line])))
         elif df_raw['Action'].loc[line] == 'sell':
-            sl.append((df_raw['Current Price'].loc[line]) + (3*(df_raw['atr'].loc[line])))
+            sl.append((df_raw['Current Price'].loc[line]) + (3.3*(df_raw['atr'].loc[line])))
             tp.append((df_raw['Current Price'].loc[line]) - (5*(df_raw['atr'].loc[line])))
         else:
             sl.append(0)
@@ -198,6 +200,13 @@ for currency in to_trade_final['Currency']:
 if len(currs_traded) > 0:
     telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
+to_trade_final.reset_index(inplace=True)
+to_trade_final_limit = to_trade_final
+new_comm = [comm+'LMT' for comm in to_trade_final_limit['comment']]
+to_trade_final_limit.drop(columns=['comment'],inplace=True)
+to_trade_final_limit['comment'] = new_comm
+to_trade_final_limit = to_trade_final_limit[to_trade_final.columns]
+to_trade_final = to_trade_final.append(to_trade_final_limit)
 to_trade_final.reset_index(inplace=True)
 to_trade_final.drop(columns = 'index', inplace=True)
 print(to_trade_final)
@@ -249,7 +258,7 @@ for pair in to_trade_final['Currency']:
         else:
             telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
     else:
-        limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss_limit, takeprofit=tprof, comment =coms)
+        limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss_limit, takeprofit=tprof, comment =coms+'LMT')
         if limit_order != -1:
             telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
             telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)) + ', TP: ' + str(round(tprof, 5)))
