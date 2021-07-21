@@ -182,9 +182,11 @@ df_final.to_csv('d:/TradeJournal/cerberus_raw.csv', index=False)
 telegram_bot_sendfile('cerberus_raw.csv',location='d:/TradeJournal/')
 
 df_og = df_final
-to_trade_final = df_final[df_final['Action'] != 'ignore']
-to_trade_final.reset_index(inplace = True)
-to_trade_final.drop(columns = 'index', inplace = True)
+to_trade_final_raw = df_final[df_final['Action'] != 'ignore']
+to_trade_final_raw.reset_index(inplace = True)
+to_trade_final_raw.drop(columns = 'index', inplace = True)
+to_trade_final_raw.to_csv('d:/TradeJournal/tempo_list.csv', index=False)
+to_trade_final = pd.read_csv('d:/TradeJournal/tempo_list.csv')
 
 positions = MT.Get_all_open_positions()
 all_pairs = set(list(positions['instrument']))
@@ -200,21 +202,20 @@ for currency in to_trade_final['Currency']:
 if len(currs_traded) > 0:
     telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
-to_trade_final.reset_index(inplace=True)
-to_trade_final_limit = to_trade_final
+to_trade_final_limit = pd.read_csv('d:/TradeJournal/tempo_list.csv')
 new_comm = [comm+'LMT' for comm in to_trade_final_limit['comment']]
 to_trade_final_limit.drop(columns=['comment'],inplace=True)
 to_trade_final_limit['comment'] = new_comm
-to_trade_final_limit = to_trade_final_limit[to_trade_final.columns]
-to_trade_final = to_trade_final.append(to_trade_final_limit)
-to_trade_final.reset_index(inplace=True)
-to_trade_final.drop(columns = 'index', inplace=True)
-print(to_trade_final)
-if len(to_trade_final) == 0:
+to_trade_final_journal = pd.read_csv('d:/TradeJournal/tempo_list.csv')
+to_trade_final_journal = to_trade_final_journal.append(to_trade_final_limit)
+to_trade_final_journal.reset_index(inplace=True)
+to_trade_final_journal.drop(columns = 'index', inplace=True)
+print(to_trade_final_journal)
+if len(to_trade_final_journal) == 0:
     telegram_bot_sendtext('No valid setup found. ')
 else:
     df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
-    df_journal = df_journal.append(to_trade_final)
+    df_journal = df_journal.append(to_trade_final_journal)
     df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 
 for currency in positions['instrument']:
@@ -224,13 +225,17 @@ for currency in positions['instrument']:
         if rsi_close <= 30:
             MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
             telegram_bot_sendtext(currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
+            time.sleep(1)
     if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
         if rsi_close >= 70:
             MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-            telegram_bot_sendtext(currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))        
+            telegram_bot_sendtext(currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
+            time.sleep(1)   
     else:
       print(currency, ' is okay. ')
-
+print(to_trade_final_journal)
+print(to_trade_final)
+# '''
 for pair in to_trade_final['Currency']:
     current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
     atr_now = to_trade_final['atr'][to_trade_final['Currency'] == pair].values[0]
@@ -265,3 +270,4 @@ for pair in to_trade_final['Currency']:
         else:
             telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
             telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)))
+# '''
