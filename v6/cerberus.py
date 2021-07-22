@@ -271,4 +271,3 @@ for pair in to_trade_final['Currency']:
             telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
             telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)))
 # '''
-print('test commit')
