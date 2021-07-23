@@ -235,7 +235,7 @@ for currency in positions['instrument']:
       print(currency, ' is okay. ')
 print(to_trade_final_journal)
 print(to_trade_final)
-# '''
+#'''
 for pair in to_trade_final['Currency']:
     current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
     atr_now = to_trade_final['atr'][to_trade_final['Currency'] == pair].values[0]
@@ -270,4 +270,4 @@ for pair in to_trade_final['Currency']:
         else:
             telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
             telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)))
-# '''
+#'''
