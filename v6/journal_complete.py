@@ -64,3 +64,12 @@ df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 df_close_journal_prev = pd.read_csv('d:/TradeJournal/X_trade_journal.csv')
 df_close_journal_prev = df_close_journal_prev.append(df_close_journal)
 df_close_journal_prev.to_csv('d:/TradeJournal/X_trade_journal.csv', index=False)
+
+win = df_close_journal_prev[df_close_journal_prev['results'] == 'win']
+loss = df_close_journal_prev[df_close_journal_prev['results'] == 'lose']
+win_rate = len(win)/len(df_close_journal_prev)
+ave_win_pnl = round(win['PNL'].mean(), 2)
+ave_loss_pnl = round(loss['PNL'].mean(), 2)
+total_win_pnl = round(win['PNL'].sum(), 2)
+total_win_pnl = round(loss['PNL'].sum(), 2)
+rsi_change = 0
