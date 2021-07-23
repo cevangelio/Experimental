@@ -65,11 +65,11 @@ def cerberus(tf='H1'):
         current_price_l.append(current_price)
         atr_raw = ta.atr(high = bars['high'], low = bars['low'], close = bars['close'],mamode = 'EMA')
         bars['atr'] = atr_raw
-        atr = atr_raw[len(bars) - 1] #last value
+        atr = atr_raw[len(bars) - 2] #last value
         atr_l.append(atr)
-        atr_prev = atr_raw[len(bars) - 2]
+        atr_prev = atr_raw[len(bars) - 3]
         atr_prev_l.append(atr_prev)
-        atr_delta = (((bars['atr'].loc[len(bars) - 1]) - (bars['atr'].loc[len(bars) - 2]))/bars['atr'].loc[len(bars) - 2])*100
+        atr_delta = ((atr_prev - atr)/atr_prev)*100
         atr_delta_l.append(round(atr_delta, 2))
         rsi_raw = ta.rsi(bars['close'], length = 14)
         bars['rsi'] = rsi_raw
