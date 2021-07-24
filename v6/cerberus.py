@@ -16,8 +16,6 @@ import datetime
 from datetime import date, datetime
 import time
 from pathlib import Path
-
-from requests.sessions import TooManyRedirects
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
