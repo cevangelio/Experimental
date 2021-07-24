@@ -240,34 +240,31 @@ for pair in to_trade_final['Currency']:
     current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
     atr_now = to_trade_final['atr'][to_trade_final['Currency'] == pair].values[0]
     dirxn = to_trade_final['Action'][to_trade_final['Currency'] == pair].values[0]
-    sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
-    tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
+    sloss = round(to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0],5)
+    tprof = round(to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0],5)
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
     coms = to_trade_final['comment'][to_trade_final['Currency'] == pair].values[0]
     limit_price = 0
-    sloss_limit = 0
     if dirxn == 'buy':
-        limit_price = current_price - atr_now
-        sloss_limit = limit_price - (3*atr_now)
+        limit_price = round((current_price - atr_now),5)
     elif dirxn == 'sell':
-        limit_price = current_price + atr_now
-        sloss_limit = limit_price + (3*atr_now)
-    vol = 0.5
-    if spread <= 13.0:
+        limit_price = round((current_price + atr_now),5)
+    vol = 0.50
+    if spread <= 130.0:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
-        order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss_limit, takeprofit=tprof, comment =coms+'LMT')
+        order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
         if order != -1:    
-            telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
-            telegram_bot_sendtext('Price: ' + str(round(current_price, 5)) + ', SL: ' + str(round(sloss, 5)) + ', TP: ' + str(round(tprof, 5)))
+            telegram_bot_sendtext('FXCM H1 Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ') FXCM H1')
+            telegram_bot_sendtext('Price: ' + str(current_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
             time.sleep(3)
         else:
-            telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
+            telegram_bot_sendtext('FXCM H1 Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ') FXCM H1')
     else:
-        limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss_limit, takeprofit=tprof, comment =coms+'LMT')
+        limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
         if limit_order != -1:
-            telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
-            telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)) + ', TP: ' + str(round(tprof, 5)))
+            telegram_bot_sendtext('FXCM H1 Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
+            telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
         else:
-            telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
-            telegram_bot_sendtext('Price: ' + str(round(limit_price, 5)) + ', SL: ' + str(round(sloss_limit, 5)))
+            telegram_bot_sendtext('FXCM H1 Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
+            telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss)+ ', TP: ' + str(tprof))
 #'''
