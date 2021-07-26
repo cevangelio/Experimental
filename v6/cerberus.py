@@ -9,6 +9,10 @@ Strategy:
 5. SL = 3ATR
 6. Exit = overbought or oversold or TP (5ATR) or basketclose (3K)
 
+
+stacking winners
+
+- idea1: every 1.5 atr, if curr price exceeds 1.5 atr place limit order
 '''
 import pandas as pd
 import requests
@@ -247,7 +251,7 @@ for pair in to_trade_final['Currency']:
         limit_price = round((current_price - atr_now),5)
     elif dirxn == 'sell':
         limit_price = round((current_price + atr_now),5)
-    vol = 0.50
+    vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
     if spread <= 130.0:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
         order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')

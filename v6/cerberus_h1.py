@@ -247,7 +247,7 @@ for pair in to_trade_final['Currency']:
         limit_price = round((current_price - atr_now),5)
     elif dirxn == 'sell':
         limit_price = round((current_price + atr_now),5)
-    vol = 0.03
+    vol = round((MT.Get_dynamic_account_info()['balance']*0.000005), 2) #since H1, more trades - half the vol
     if spread <= 130.0:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
         order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
