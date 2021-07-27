@@ -233,6 +233,12 @@ for currency in positions['instrument']:
             time.sleep(1)   
     else:
       print(currency, ' is okay. ')
+
+open_orders = MT.Get_all_orders()
+for item in open_orders['instrument']:
+    if item not in set(list(positions['instrument'])):
+        MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
+
 print(to_trade_final_journal)
 print(to_trade_final)
 #'''
