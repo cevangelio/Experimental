@@ -168,6 +168,8 @@ if datetime.now().weekday() > 5: #don't run on weekends
     exit()
 elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
     exit()
+elif datetime.now().weekday() == 0 and datetime.now().hour < 5:
+    exit()
 else:
     pass
 
@@ -247,7 +249,7 @@ for pair in to_trade_final['Currency']:
         limit_price = round((current_price - atr_now),5)
     elif dirxn == 'sell':
         limit_price = round((current_price + atr_now),5)
-    vol = round((MT.Get_dynamic_account_info()['balance']*0.000005), 2) #since H1, more trades - half the vol
+    vol = round((MT.Get_dynamic_account_info()['balance']*0.000005), 2)*10 #since H1, more trades - half the vol
     if spread <= 130.0:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
         order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
@@ -265,4 +267,5 @@ for pair in to_trade_final['Currency']:
         else:
             telegram_bot_sendtext('FXCM H1 Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
             telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss)+ ', TP: ' + str(tprof))
+telegram_bot_sendtext('Current account equity: USD '+ str(MT.Get_dynamic_account_info()['equity']))
 #'''

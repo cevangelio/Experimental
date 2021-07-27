@@ -172,6 +172,8 @@ if datetime.now().weekday() > 5: #don't run on weekends
     exit()
 elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
     exit()
+elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5am
+    exit()
 else:
     pass
 
@@ -237,7 +239,11 @@ for currency in positions['instrument']:
       print(currency, ' is okay. ')
 print(to_trade_final_journal)
 print(to_trade_final)
-#'''
+
+enter_trade = 'yes'
+if enter_trade == 'no':
+    exit()
+
 for pair in to_trade_final['Currency']:
     current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
     atr_now = to_trade_final['atr'][to_trade_final['Currency'] == pair].values[0]
@@ -269,4 +275,3 @@ for pair in to_trade_final['Currency']:
         else:
             telegram_bot_sendtext('FXCM H1 Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
             telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss)+ ', TP: ' + str(tprof))
-#'''
