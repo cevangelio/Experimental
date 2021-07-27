@@ -71,19 +71,19 @@ def cerberus(tf='H1'):
         atr_delta_l.append(round(atr_delta, 2))
         rsi_raw = ta.rsi(bars['close'], length = 14)
         bars['rsi'] = rsi_raw
-        rsi = rsi_raw[len(bars)-2]
+        rsi = rsi_raw[len(bars)-1]
         rsi_ov_l.append(rsi)
-        rsi_prev = rsi_raw[len(bars)-3]
+        rsi_prev = rsi_raw[len(bars)-2]
         rsi_ov_prev_l.append(rsi_prev)
         rsi_trend_raw = ta.rsi(bars['close'], length = 100)
         bars['rsi trend'] = rsi_trend_raw
-        rsi_trend = rsi_trend_raw[len(bars)-2]
+        rsi_trend = rsi_trend_raw[len(bars)-1]
         rsi_trend_l.append(rsi_trend)
-        rsi_trend_prev = rsi_trend_raw[len(bars)-3]
+        rsi_trend_prev = rsi_trend_raw[len(bars)-2]
         rsi_trend_prev_l.append(rsi_trend_prev)
         macd_raw = ta.macd(bars['close'])
         macd_final = pd.concat([bars,macd_raw], axis=1, join='inner')
-        macd_curr = macd_final.loc[len(bars) - 2]['MACD_12_26_9']
+        macd_curr = macd_final.loc[len(bars) - 1]['MACD_12_26_9']
         macd_l.append(macd_curr)
         macd_signal_curr = macd_final.loc[len(bars) - 2]['MACDs_12_26_9']
         macd_signal_l.append(macd_signal_curr)
@@ -146,7 +146,7 @@ def cerberus(tf='H1'):
         else:
             trade_status.append('ignore')
     df_raw['Action'] = trade_status
-    df_raw['comment'] = [('CBRUS'+df_raw['Currency'].loc[line]+datetime.now().strftime('%Y%m%d%H%M%S')) for line in range(0, len(df_raw))]
+    df_raw['comment'] = [('CBRUS_v2_'+df_raw['Currency'].loc[line]+datetime.now().strftime('%Y%m%d%H%M%S')) for line in range(0, len(df_raw))]
     sl = []
     tp = []
     for line in range(0, len(df_raw)):

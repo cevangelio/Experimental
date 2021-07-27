@@ -8,7 +8,7 @@ Strategy:
 
 5. SL = 3ATR
 6. Exit = overbought or oversold or TP (5ATR) or basketclose (3K)
-
+7. Run strategy 1 hour before new candle forms (h4)
 
 stacking winners
 
