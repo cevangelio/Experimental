@@ -27,12 +27,21 @@ import pandas_ta as ta
 from tapy import Indicators
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-port = 1125 #FXCM MAIN 50k 1:100
+port = 1127 #FXCM MAIN 50k 1:100
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
+
+if datetime.now().weekday() > 5: #don't run on weekends
+    exit()
+elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
+    exit()
+elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5am
+    exit()
+else:
+    pass
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -108,9 +117,9 @@ def scalp():
             rsi_trend.append('ignore')
         
         if df_raw['bear_fractal'].loc[line] == False and df_raw['bull_fractal'].loc[line] == True:
-            fractal_trend.append('buy')
-        elif df_raw['bear_fractal'].loc[line] == True and df_raw['bull_fractal'].loc[line] == False:
             fractal_trend.append('sell')
+        elif df_raw['bear_fractal'].loc[line] == True and df_raw['bull_fractal'].loc[line] == False:
+            fractal_trend.append('buy')
         else:
             fractal_trend.append('ignore')
 
