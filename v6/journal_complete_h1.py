@@ -7,7 +7,7 @@ from pathlib import Path
 import dateutil.relativedelta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-port = 1122 #FXCM MAIN 50k 1:100
+port = 1125 #FXCM MAIN 50k 1:100
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
