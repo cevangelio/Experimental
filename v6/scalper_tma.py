@@ -168,8 +168,8 @@ for pair in to_trade['Currency']:
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
     coms = to_trade['comment'][to_trade['Currency'] == pair].values[0]
 
-    # vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
-    vol = 0.03
+    vol = round((MT.Get_dynamic_account_info()['balance']*0.000020), 2)
+    # vol = 0.03
     if spread <= 130.0:
         order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
         if order != -1:
