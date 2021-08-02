@@ -191,10 +191,11 @@ to_trade_final = pd.read_csv('d:/TradeJournal/tempo_list_h1.csv')
 positions = MT.Get_all_open_positions()
 all_pairs = set(list(positions['instrument']))
 
+vol = round((MT.Get_dynamic_account_info()['balance']*0.000005), 2)*10
 currs_traded =[]
 for currency in to_trade_final['Currency']:
     if currency in all_pairs:
-        if positions['volume'][positions['instrument'] == currency].sum() > 2:
+        if positions['volume'][positions['instrument'] == currency].sum() > vol*2:
             curr_index = to_trade_final[to_trade_final['Currency'] == currency].index.values[0]
             to_trade_final.drop([curr_index], inplace=True)
             currs_traded.append(currency)
@@ -239,39 +240,9 @@ for item in open_orders['instrument']:
     if item not in set(list(positions['instrument'])):
         MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
 
-
-open_orders = MT.Get_all_orders()
-for item in open_orders['instrument']:
-    if item not in set(list(positions['instrument'])):
-        MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
-
-all_orders = list(set(list(positions['instrument'])) | set(list(open_orders['instrument'])))
-all_orders_count = []
-for currency in all_orders:
-    print(currency)
-    try:
-        open_order = open_orders['volume'][open_orders['instrument'] == currency].sum()
-    except:
-        open_order = 0
-    try:
-        open_position = positions['volume'][positions['instrument'] == currency].sum()
-    except:
-        open_position = 0
-    total_currency = open_order + open_position
-    all_orders_count.append(total_currency)
-all_orders_df = pd.DataFrame(list(zip(all_orders,all_orders_count)), columns=['Currency', 'Total Positions'])
-
 print(to_trade_final_journal)
 print(to_trade_final)
 
-for currency in to_trade_final['Currency']:
-    total_positions = all_orders_df['Total Positions'][all_orders_df['Currency'] == currency].values[0]
-    index_value = all_orders_df['Total Positions'][all_orders_df['Currency'] == currency].index.values[0]
-    if total_positions >= 1.0:
-        to_trade_final.drop([index_value])
-
-print(to_trade_final_journal)
-print(to_trade_final)
 #'''
 for pair in to_trade_final['Currency']:
     current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
