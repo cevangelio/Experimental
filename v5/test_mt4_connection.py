@@ -14,3 +14,5 @@ for mt4 in port:
         print('MT4 connection working.')
         pera = MT.Get_dynamic_account_info()['balance']
         print('Your current balance is ' + str(pera))
+        positions = MT.Get_all_open_positions()
+        print(len(positions[positions['instrument'] == 'AUDUSD']))

@@ -23,11 +23,12 @@ from pathlib import Path
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-ports = [1125, 1127] #FXCM MAIN 50k 1:100
+port = 1127 #globalprime MAIN 1k 1:100
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
+con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -176,115 +177,109 @@ elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5
 else:
     pass
 
-for port in ports:
-    con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
-    if con == True:
-        df_final = pd.DataFrame()
-        df_final['Currency'] = list_symbols
+df_final = pd.DataFrame()
+df_final['Currency'] = list_symbols
 
-        df_final = cerberus(tf='H4')
-        print(df_final)
-        df_final.to_csv('d:/TradeJournal/cerberus_raw.csv', index=False)
-        telegram_bot_sendfile('cerberus_raw.csv',location='d:/TradeJournal/')
+df_final = cerberus(tf='H4')
+print(df_final)
+df_final.to_csv('d:/TradeJournal/cerberus_raw.csv', index=False)
+telegram_bot_sendfile('cerberus_raw.csv',location='d:/TradeJournal/')
 
-        df_og = df_final
-        to_trade_final_raw = df_final[df_final['Action'] != 'ignore']
-        to_trade_final_raw.reset_index(inplace = True)
-        to_trade_final_raw.drop(columns = 'index', inplace = True)
-        to_trade_final_raw.to_csv('d:/TradeJournal/tempo_list.csv', index=False)
-        to_trade_final = pd.read_csv('d:/TradeJournal/tempo_list.csv')
+df_og = df_final
+to_trade_final_raw = df_final[df_final['Action'] != 'ignore']
+to_trade_final_raw.reset_index(inplace = True)
+to_trade_final_raw.drop(columns = 'index', inplace = True)
+to_trade_final_raw.to_csv('d:/TradeJournal/tempo_list.csv', index=False)
+to_trade_final = pd.read_csv('d:/TradeJournal/tempo_list.csv')
 
-        positions = MT.Get_all_open_positions()
-        all_pairs = set(list(positions['instrument']))
-        print(all_pairs)
+positions = MT.Get_all_open_positions()
+all_pairs = set(list(positions['instrument']))
 
-        vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
+vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
 
-        currs_traded =[]
-        for currency in to_trade_final['Currency']:
-            if currency in all_pairs:
-                if len(positions[positions['instrument'] == currency])  >= 2:
-                    curr_index = to_trade_final[to_trade_final['Currency'] == currency].index.values[0]
-                    to_trade_final.drop([curr_index], inplace=True)
-                    currs_traded.append(currency)
+currs_traded =[]
+for currency in to_trade_final['Currency']:
+    if currency in all_pairs:
+        if positions['volume'][positions['instrument'] == currency].sum() > vol*2:
+            curr_index = to_trade_final[to_trade_final['Currency'] == currency].index.values[0]
+            to_trade_final.drop([curr_index], inplace=True)
+            currs_traded.append(currency)
 
-        if len(currs_traded) > 0:
-            telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
+if len(currs_traded) > 0:
+    telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
-        to_trade_final_limit = pd.read_csv('d:/TradeJournal/tempo_list.csv')
-        new_comm = [comm+'LMT' for comm in to_trade_final_limit['comment']]
-        to_trade_final_limit.drop(columns=['comment'],inplace=True)
-        to_trade_final_limit['comment'] = new_comm
-        to_trade_final_journal = pd.read_csv('d:/TradeJournal/tempo_list.csv')
-        to_trade_final_journal = to_trade_final_journal.append(to_trade_final_limit)
-        to_trade_final_journal.reset_index(inplace=True)
-        to_trade_final_journal.drop(columns = 'index', inplace=True)
-        print(to_trade_final_journal)
-        if len(to_trade_final_journal) == 0:
-            telegram_bot_sendtext('No valid setup found. ')
+to_trade_final_limit = pd.read_csv('d:/TradeJournal/tempo_list.csv')
+new_comm = [comm+'LMT' for comm in to_trade_final_limit['comment']]
+to_trade_final_limit.drop(columns=['comment'],inplace=True)
+to_trade_final_limit['comment'] = new_comm
+to_trade_final_journal = pd.read_csv('d:/TradeJournal/tempo_list.csv')
+to_trade_final_journal = to_trade_final_journal.append(to_trade_final_limit)
+to_trade_final_journal.reset_index(inplace=True)
+to_trade_final_journal.drop(columns = 'index', inplace=True)
+print(to_trade_final_journal)
+if len(to_trade_final_journal) == 0:
+    telegram_bot_sendtext('No valid setup found. ')
+else:
+    df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
+    df_journal = df_journal.append(to_trade_final_journal)
+    df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
+
+for currency in positions['instrument']:
+    rsi_close = df_og['rsi'][df_og['Currency'] == currency].values[0]
+    pnl = positions['profit'][positions['instrument'] == currency].values[0]
+    if positions['position_type'][positions['instrument'] == currency].values[0] == 'sell':
+        if rsi_close <= 30:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+            telegram_bot_sendtext(currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
+            time.sleep(1)
+    if positions['position_type'][positions['instrument'] == currency].values[0] == 'buy':
+        if rsi_close >= 70:
+            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+            telegram_bot_sendtext(currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
+            time.sleep(1)   
+    else:
+      print(currency, ' is okay. ')
+
+open_orders = MT.Get_all_orders()
+for item in open_orders['instrument']:
+    if item not in set(list(positions['instrument'])):
+        MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
+
+print(to_trade_final_journal)
+print(to_trade_final)
+
+enter_trade = 'yes'
+if enter_trade == 'no':
+    exit()
+
+for pair in to_trade_final['Currency']:
+    current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
+    atr_now = to_trade_final['atr'][to_trade_final['Currency'] == pair].values[0]
+    dirxn = to_trade_final['Action'][to_trade_final['Currency'] == pair].values[0]
+    sloss = round(to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0],5)
+    tprof = round(to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0],5)
+    spread = MT.Get_last_tick_info(instrument=pair)['spread']
+    coms = to_trade_final['comment'][to_trade_final['Currency'] == pair].values[0]
+    limit_price = 0
+    if dirxn == 'buy':
+        limit_price = round((current_price - atr_now),5)
+    elif dirxn == 'sell':
+        limit_price = round((current_price + atr_now),5)
+    vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
+    if spread <= 130.0:
+        order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
+        order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
+        if order != -1:    
+            telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
+            telegram_bot_sendtext('Price: ' + str(current_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
+            time.sleep(3)
         else:
-            df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
-            df_journal = df_journal.append(to_trade_final_journal)
-            df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
-
-        for currency in all_pairs:
-            rsi_close = df_og['rsi'][df_og['Currency'] == currency].values[0]
-            pnl = positions['profit'][positions['instrument'] == currency].values[0]
-            position_tickets = positions['ticket'][positions['instrument'] == currency]
-            for tickets in position_tickets:
-                if positions['position_type'][positions['ticket'] == tickets].values[0] == 'sell':
-                    if rsi_close <= 30:
-                        MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                        telegram_bot_sendtext(currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
-                        time.sleep(1)
-                if positions['position_type'][positions['ticket'] == tickets].values[0] == 'buy':
-                    if rsi_close >= 70:
-                        MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                        telegram_bot_sendtext(currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
-                        time.sleep(1)   
-                else:
-                    print(currency, ' is okay. ')
-
-        open_orders = MT.Get_all_orders()
-        for item in open_orders['instrument']:
-            if item not in set(list(positions['instrument'])):
-                MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
-
-        print(to_trade_final_journal)
-        print(to_trade_final)
-
-        enter_trade = 'yes'
-        if enter_trade == 'no':
-            exit()
-
-        for pair in to_trade_final['Currency']:
-            current_price = to_trade_final['Current Price'][to_trade_final['Currency'] == pair].values[0]
-            atr_now = to_trade_final['atr'][to_trade_final['Currency'] == pair].values[0]
-            dirxn = to_trade_final['Action'][to_trade_final['Currency'] == pair].values[0]
-            sloss = round(to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0],5)
-            tprof = round(to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0],5)
-            spread = MT.Get_last_tick_info(instrument=pair)['spread']
-            coms = to_trade_final['comment'][to_trade_final['Currency'] == pair].values[0]
-            limit_price = 0
-            if dirxn == 'buy':
-                limit_price = round((current_price - atr_now),5)
-            elif dirxn == 'sell':
-                limit_price = round((current_price + atr_now),5)
-            vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
-            if spread <= 130.0:
-                order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
-                order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
-                if order != -1:    
-                    telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
-                    telegram_bot_sendtext('Price: ' + str(current_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
-                    time.sleep(3)
-                else:
-                    telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
-            else:
-                limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
-                if limit_order != -1:
-                    telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
-                    telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
-                else:
-                    telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
-                    telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss)+ ', TP: ' + str(tprof))
+            telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
+    else:
+        limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
+        if limit_order != -1:
+            telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
+            telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
+        else:
+            telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
+            telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss)+ ', TP: ' + str(tprof))

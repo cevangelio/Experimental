@@ -27,7 +27,7 @@ import pandas_ta as ta
 from tapy import Indicators
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-port = 1127 #FXCM MAIN 50k 1:100
+port = 1127 #GlobalPrime MAIN 1k 1:200
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
@@ -75,7 +75,8 @@ def scalp():
     atr_l = []
     for currency in df_raw['Currency']:
         bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value('M5'), nbrofbars=600))
-        current_price_l.append(bars['close'].loc[len(bars) - 1])
+        current_price = bars['close'].loc[len(bars) - 1]
+        current_price_l.append(current_price)
         i = Indicators(bars)
         # i.smma(period=30, column_name = 'smma30', apply_to = 'close')
         # i.smma(period=50, column_name = 'smma50', apply_to = 'close')
@@ -108,25 +109,21 @@ def scalp():
             smma_trend.append('buy')
         else:
             smma_trend.append('ignore')
-    
         if df_raw['rsi'].loc[line] < 50:
             rsi_trend.append('sell')
         elif df_raw['rsi'].loc[line] > 50:
             rsi_trend.append('buy')
         else:
             rsi_trend.append('ignore')
-        
         if df_raw['bear_fractal'].loc[line] == False and df_raw['bull_fractal'].loc[line] == True:
             fractal_trend.append('sell')
         elif df_raw['bear_fractal'].loc[line] == True and df_raw['bull_fractal'].loc[line] == False:
             fractal_trend.append('buy')
         else:
             fractal_trend.append('ignore')
-
     df_raw['smma trend'] = smma_trend
     df_raw['rsi trend'] = rsi_trend
     df_raw['fractal trend'] = fractal_trend
-
     action = []
     for line in range(0, len(df_raw)):
         if (df_raw['smma trend'].loc[line] == 'sell') and (df_raw['rsi trend'].loc[line] == 'sell') and (df_raw['fractal trend'].loc[line] == 'sell'):
@@ -167,7 +164,6 @@ for pair in to_trade['Currency']:
     tprof = round(to_trade['tp'][to_trade['Currency'] == pair].values[0],5)
     spread = MT.Get_last_tick_info(instrument=pair)['spread']
     coms = to_trade['comment'][to_trade['Currency'] == pair].values[0]
-
     vol = round((MT.Get_dynamic_account_info()['balance']*0.000020), 2)
     # vol = 0.03
     if spread <= 130.0:
