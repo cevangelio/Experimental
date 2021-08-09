@@ -212,7 +212,7 @@ for port in ports:
                     currs_traded.append(currency)
 
         if len(currs_traded) > 0:
-            telegram_bot_sendtext(str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
+            telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
         to_trade_final_limit = pd.read_csv('d:/TradeJournal/tempo_list.csv')
         new_comm = [comm+'LMT' for comm in to_trade_final_limit['comment']]
