@@ -23,7 +23,9 @@ from pathlib import Path
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-ports = [1125, 1127] #FXCM MAIN 50k 1:100
+ports = [1125, 1127]
+port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'Global_Prime'}
+
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
@@ -177,6 +179,7 @@ else:
     pass
 
 for port in ports:
+    broker = port_dict[port]
     con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
     if con == True:
         df_final = pd.DataFrame()
@@ -235,12 +238,12 @@ for port in ports:
                 if positions['position_type'][positions['ticket'] == tickets].values[0] == 'sell':
                     if rsi_close <= 30:
                         MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                        telegram_bot_sendtext(currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
+                        telegram_bot_sendtext(broker + ': ' + currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
                         time.sleep(1)
                 if positions['position_type'][positions['ticket'] == tickets].values[0] == 'buy':
                     if rsi_close >= 70:
                         MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                        telegram_bot_sendtext(currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
+                        telegram_bot_sendtext(broker + ': ' + currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
                         time.sleep(1)   
                 else:
                     print(currency, ' is okay. ')
@@ -275,16 +278,16 @@ for port in ports:
                 order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
                 order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
                 if order != -1:    
-                    telegram_bot_sendtext('Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
+                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
                     telegram_bot_sendtext('Price: ' + str(current_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
                     time.sleep(3)
                 else:
-                    telegram_bot_sendtext('Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
+                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
             else:
                 limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
                 if limit_order != -1:
-                    telegram_bot_sendtext('Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
+                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
                 else:
-                    telegram_bot_sendtext('Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
+                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found but spread too high. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ' LIMIT)')
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss)+ ', TP: ' + str(tprof))
