@@ -178,6 +178,8 @@ elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5
 else:
     pass
 
+#test
+
 for port in ports:
     broker = port_dict[port]
     con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
