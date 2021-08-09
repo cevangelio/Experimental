@@ -224,7 +224,7 @@ for port in ports:
         to_trade_final_journal.drop(columns = 'index', inplace=True)
         print(to_trade_final_journal)
         if len(to_trade_final_journal) == 0:
-            telegram_bot_sendtext('No valid setup found. ')
+            telegram_bot_sendtext(broker + ': ' + 'No valid setup found. ')
         else:
             df_journal = pd.read_csv('d:/TradeJournal/trade_journal.csv')
             df_journal = df_journal.append(to_trade_final_journal)
