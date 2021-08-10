@@ -23,8 +23,8 @@ from pathlib import Path
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-ports = [1125, 1127]
-port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'Global_Prime'}
+ports = [1122, 1125, 1127]
+port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
@@ -166,7 +166,14 @@ def cerberus(tf='H1'):
             tp.append(0)
     df_raw['sl'] = sl
     df_raw['tp'] = tp
-    df_raw['spread'] = [MT.Get_last_tick_info(instrument=pair)['spread'] for pair in df_raw['Currency']]
+    raw_spread = []
+    for pair in df_raw['Currency']:
+        spread = MT.Get_last_tick_info(instrument=pair)['spread']
+        if spread > 0:
+            raw_spread.append(spread)
+        else:
+            raw_spread.append(0)
+    df_raw['spread'] = raw_spread
     return df_raw
 
 if datetime.now().weekday() > 5: #don't run on weekends
