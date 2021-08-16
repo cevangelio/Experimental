@@ -10,7 +10,8 @@ MT = Pytrader_API()
 ports = [1122, 1125, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
+list_symbols = ['AUDCAD','AUDUSD','EURUSD', 'GBPUSD','NZDUSD','USDCAD','USDCHF','USDJPY'] #2021 best performing
+# list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
@@ -73,10 +74,32 @@ to_trade_final_raw.drop(columns = 'index', inplace = True)
 
 print(to_trade_final_raw)
 
+exits = pd.read_csv('d:/TradeJournal/cerberus_raw.csv')
+
+sls = []
+tps = []
+for currency in to_trade_final_raw['Currency']:
+    current_price = MT.Get_last_tick_info(instrument=currency)['bid']
+    if to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency] == 'buy':
+        sls.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
+        tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*5)
+    elif to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency] == 'sell':
+        sls.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
+        tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*5)
+    else:
+        sls.append(0)
+        tps.append(0)
+to_trade_final_raw['sl'] = sls
+to_trade_final_raw['tp'] = tps
+
+
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
+    sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
+    tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
     coms = 'ODN_v1'
-    vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
-    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms)
+    vol = 0.50
+    # vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
+    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
     if order != -1:
         telegram_bot_sendtext('ODIN - ERROR opening order for ', currency, '-',dirxn.upper())
