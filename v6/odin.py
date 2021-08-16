@@ -72,7 +72,6 @@ to_trade_final_raw = all_curr[all_curr['Action'] != 'ignore']
 to_trade_final_raw.reset_index(inplace = True)
 to_trade_final_raw.drop(columns = 'index', inplace = True)
 
-print(to_trade_final_raw)
 
 exits = pd.read_csv('d:/TradeJournal/cerberus_raw.csv')
 
@@ -80,10 +79,10 @@ sls = []
 tps = []
 for currency in to_trade_final_raw['Currency']:
     current_price = MT.Get_last_tick_info(instrument=currency)['bid']
-    if to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency] == 'buy':
+    if to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0] == 'buy':
         sls.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
         tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*5)
-    elif to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency] == 'sell':
+    elif to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0] == 'sell':
         sls.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
         tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*5)
     else:
@@ -92,14 +91,17 @@ for currency in to_trade_final_raw['Currency']:
 to_trade_final_raw['sl'] = sls
 to_trade_final_raw['tp'] = tps
 
+print(to_trade_final_raw)
 
+# ''' 
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
     tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
     coms = 'ODN_v1'
-    vol = 0.50
+    vol = 0.25
     # vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
     order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
     if order != -1:
         telegram_bot_sendtext('ODIN - ERROR opening order for ', currency, '-',dirxn.upper())
+# '''

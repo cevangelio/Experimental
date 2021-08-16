@@ -1,10 +1,4 @@
 
-import pandas as pd
-import requests
-import datetime
-from datetime import date, datetime
-import time
-from pathlib import Path
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
 ports = [1122, 1125, 1127]
@@ -19,4 +13,4 @@ con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
 positions = MT.Get_all_open_positions()
 
 for pair in positions['instrument']:
-    MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+    MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == pair].values[0])
