@@ -47,10 +47,11 @@ for currency in list_symbols:
     to_all_curr.append(mon_open)
     wed_open = bars['open'].loc[len(bars)-1]
     to_all_curr.append(wed_open)
+    mon_rsi_raw = bars['rsi trend'].loc[len(bars)-3]
     tues_rsi_raw = bars['rsi trend'].loc[len(bars)-2]
-    if tues_rsi_raw > 50:
+    if tues_rsi_raw > 50 and mon_rsi_raw > 50:
         to_all_curr.append('buy')
-    elif tues_rsi_raw < 50:
+    elif tues_rsi_raw < 50 and mon_rsi_raw < 50:
         to_all_curr.append('sell')
     else:
         to_all_curr.append('ignore')

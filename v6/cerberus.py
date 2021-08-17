@@ -197,8 +197,8 @@ for port in ports:
 
         df_final = cerberus(tf='H4')
         print(df_final)
-        df_final.to_csv('d:/TradeJournal/cerberus_raw.csv', index=False)
-        telegram_bot_sendfile('cerberus_raw.csv',location='d:/TradeJournal/')
+        df_final.to_csv('d:/TradeJournal/cerberus_raw_'+broker+'.csv', index=False)
+        telegram_bot_sendfile('cerberus_raw_'+broker+'.csv',location='d:/TradeJournal/')
 
         df_og = df_final
         to_trade_final_raw = df_final[df_final['Action'] != 'ignore']
