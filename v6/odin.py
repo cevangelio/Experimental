@@ -72,7 +72,6 @@ to_trade_final_raw = all_curr[all_curr['Action'] != 'ignore']
 to_trade_final_raw.reset_index(inplace = True)
 to_trade_final_raw.drop(columns = 'index', inplace = True)
 
-
 exits = pd.read_csv('d:/TradeJournal/cerberus_raw.csv')
 
 sls = []

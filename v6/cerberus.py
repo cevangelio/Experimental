@@ -23,7 +23,7 @@ from pathlib import Path
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-ports = [1122, 1125, 1127]
+ports = [1122, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
@@ -120,9 +120,10 @@ def cerberus(tf='H1'):
     rsi_trend_logic = []
     for line in range(0, len(df_raw)):
         rsi_score_raw = df_raw['rsi trend'].loc[line]
-        if rsi_score_raw > 50:
+        rsi_score_prev_raw = df_raw['rsi trend prev'].loc[line]
+        if rsi_score_raw > 50 and rsi_score_prev_raw > 50:
             rsi_trend_logic.append('buy')
-        elif rsi_score_raw < 50:
+        elif rsi_score_raw < 50 and rsi_score_prev_raw < 50:
             rsi_trend_logic.append('sell')
         else:
             rsi_trend_logic.append('ignore')     
