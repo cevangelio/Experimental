@@ -207,22 +207,41 @@ for port in ports:
         to_trade_final_raw.to_csv('d:/TradeJournal/tempo_list.csv', index=False)
         to_trade_final = pd.read_csv('d:/TradeJournal/tempo_list.csv')
 
-        positions = MT.Get_all_open_positions()
-        all_pairs = set(list(positions['instrument']))
-        print(all_pairs)
+        try:
+            positions = MT.Get_all_open_positions()
+            all_pairs = set(list(positions['instrument']))
+            print(all_pairs)
+            currs_traded =[]
+            for currency in to_trade_final['Currency']:
+                if currency in all_pairs:
+                    if len(positions[positions['instrument'] == currency])  >= 2:
+                        curr_index = to_trade_final[to_trade_final['Currency'] == currency].index.values[0]
+                        to_trade_final.drop([curr_index], inplace=True)
+                        currs_traded.append(currency)
+            if len(currs_traded) > 0:
+                telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
+
+            for currency in all_pairs:
+                rsi_close = df_og['rsi'][df_og['Currency'] == currency].values[0]
+                pnl = positions['profit'][positions['instrument'] == currency].values[0]
+                position_tickets = positions['ticket'][positions['instrument'] == currency]
+                for tickets in position_tickets:
+                    if positions['position_type'][positions['ticket'] == tickets].values[0] == 'sell':
+                        if rsi_close <= 30:
+                            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+                            telegram_bot_sendtext(broker + ': ' + currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
+                            time.sleep(1)
+                    if positions['position_type'][positions['ticket'] == tickets].values[0] == 'buy':
+                        if rsi_close >= 70:
+                            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
+                            telegram_bot_sendtext(broker + ': ' + currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
+                            time.sleep(1)   
+                    else:
+                        print(currency, ' is okay. ')
+        except:
+            pass
 
         vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
-
-        currs_traded =[]
-        for currency in to_trade_final['Currency']:
-            if currency in all_pairs:
-                if len(positions[positions['instrument'] == currency])  >= 2:
-                    curr_index = to_trade_final[to_trade_final['Currency'] == currency].index.values[0]
-                    to_trade_final.drop([curr_index], inplace=True)
-                    currs_traded.append(currency)
-
-        if len(currs_traded) > 0:
-            telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
         to_trade_final_limit = pd.read_csv('d:/TradeJournal/tempo_list.csv')
         new_comm = [comm+'LMT' for comm in to_trade_final_limit['comment']]
@@ -240,28 +259,13 @@ for port in ports:
             df_journal = df_journal.append(to_trade_final_journal)
             df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 
-        for currency in all_pairs:
-            rsi_close = df_og['rsi'][df_og['Currency'] == currency].values[0]
-            pnl = positions['profit'][positions['instrument'] == currency].values[0]
-            position_tickets = positions['ticket'][positions['instrument'] == currency]
-            for tickets in position_tickets:
-                if positions['position_type'][positions['ticket'] == tickets].values[0] == 'sell':
-                    if rsi_close <= 30:
-                        MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                        telegram_bot_sendtext(broker + ': ' + currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
-                        time.sleep(1)
-                if positions['position_type'][positions['ticket'] == tickets].values[0] == 'buy':
-                    if rsi_close >= 70:
-                        MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                        telegram_bot_sendtext(broker + ': ' + currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
-                        time.sleep(1)   
-                else:
-                    print(currency, ' is okay. ')
-
         open_orders = MT.Get_all_orders()
         for item in open_orders['instrument']:
-            if item not in set(list(positions['instrument'])):
-                MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
+            try:
+                if item not in set(list(positions['instrument'])):
+                    MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
+            except:
+                pass
 
         print(to_trade_final_journal)
         print(to_trade_final)
