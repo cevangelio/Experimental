@@ -2,15 +2,16 @@
 Strategy:
 
 1. TF = H4
-2. RSI14 = cross from oversold to normal (vice versa)
-3. RSI100 = below50 = sell, above50 = buy
-4. MACD
+2. RSI14 = cross from oversold to normal (vice versa)/ or from sell to buy 
+3. RSI100 = below50 = sell, above50 = buy, 2 consecutive must have consistent bias
+4. MACD - removed as too restrictive
 
 5. SL = 3ATR
-6. Exit = overbought or oversold or TP (5ATR) or basketclose (3K)
+6. Exit = TP (5ATR) or basketclose (3K) or BE SL hit
 7. Run strategy 1 hour before new candle forms (h4)
+8. Move to BE when overbought or oversold
 
-stacking winners
+stacking winners - to implement
 
 - idea1: every 1.5 atr, if curr price exceeds 1.5 atr place limit order
 '''
@@ -145,9 +146,9 @@ def cerberus(tf='H1'):
     df_raw['RSI 14'] = rsi_status
     trade_status = []
     for line in range(0, len(df_raw)):
-        if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['Current MACD Trend'].loc[line] == 'buy':
+        if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy':  #and df_raw['Current MACD Trend'].loc[line] == 'buy'
             trade_status.append('buy')
-        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['Current MACD Trend'].loc[line] == 'sell':
+        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell': # and df_raw['Current MACD Trend'].loc[line] == 'sell'
             trade_status.append('sell')
         else:
             trade_status.append('ignore')
@@ -221,26 +222,30 @@ for port in ports:
             if len(currs_traded) > 0:
                 telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
-            for currency in all_pairs:
+            for currency in all_pairs: #instead of close move to breakeven/open price
                 rsi_close = df_og['rsi'][df_og['Currency'] == currency].values[0]
                 pnl = positions['profit'][positions['instrument'] == currency].values[0]
                 position_tickets = positions['ticket'][positions['instrument'] == currency]
+                  
                 for tickets in position_tickets:
                     if positions['position_type'][positions['ticket'] == tickets].values[0] == 'sell':
                         if rsi_close <= 30:
-                            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                            telegram_bot_sendtext(broker + ': ' + currency + ' SELL position closed. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
+                            new_sl = positions['open_price'][positions['ticket'] == tickets] - 0
+                            MT.Set_sl_and_tp_for_order(ticket=positions['ticket'][positions['instrument'] == currency].values[0], stoploss=new_sl, takeprofit=0)
+                            telegram_bot_sendtext(broker + ': ' + currency + ' SELL position moved to BE. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
                             time.sleep(1)
                     if positions['position_type'][positions['ticket'] == tickets].values[0] == 'buy':
                         if rsi_close >= 70:
-                            MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == currency].values[0])
-                            telegram_bot_sendtext(broker + ': ' + currency + ' BUY position closed. PNL: ' + str(pnl) + '. RSI value bought: ' + str(round(rsi_close, 2)))
+                            new_sl = positions['open_price'][positions['ticket'] == tickets] + 0
+                            MT.Set_sl_and_tp_for_order(ticket=positions['ticket'][positions['instrument'] == currency].values[0], stoploss=new_sl, takeprofit=0)
+                            telegram_bot_sendtext(broker + ': ' + currency + ' BUY position moved to BE. PNL: ' + str(pnl) + '. RSI value overbought: ' + str(round(rsi_close, 2)))
                             time.sleep(1)   
                     else:
                         print(currency, ' is okay. ')
         except:
             pass
 
+        
         vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
 
         to_trade_final_limit = pd.read_csv('d:/TradeJournal/tempo_list.csv')
@@ -287,7 +292,11 @@ for port in ports:
                 limit_price = round((current_price - atr_now),5)
             elif dirxn == 'sell':
                 limit_price = round((current_price + atr_now),5)
-            vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
+            vol = 0
+            if broker == 'FTMO':
+                vol = 3.0
+            else:
+                vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
             if spread <= 130.0:
                 order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
                 order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')

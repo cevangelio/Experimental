@@ -10,8 +10,8 @@ MT = Pytrader_API()
 ports = [1122, 1125, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-list_symbols = ['AUDCAD','AUDUSD','EURUSD', 'GBPUSD','NZDUSD','USDCAD','USDCHF','USDJPY'] #2021 best performing
-# list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
+# list_symbols = ['AUDCAD','AUDUSD','EURUSD', 'GBPUSD','NZDUSD','USDCAD','USDCHF','USDJPY'] #2021 best performing
+list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
@@ -35,23 +35,39 @@ def telegram_bot_sendfile(filename, location):
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
 
-all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi'])
+all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
 
 for currency in list_symbols:
+    print(currency)
     bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value('D1'), nbrofbars=300))
+    bars_wk = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value('W1'), nbrofbars=300))
     rsi_trend_raw = ta.rsi(bars['close'], length = 100)
+    rsi_trend_wk_slow_raw = ta.rsi(bars_wk['close'], length = 100)
+    rsi_trend_wk_fast_raw = ta.rsi(bars_wk['close'], length = 14)
     bars['rsi trend'] = rsi_trend_raw
+    bars['rsi wk 14'] = rsi_trend_wk_fast_raw
+    bars['rsi wk 100'] = rsi_trend_wk_slow_raw
     to_all_curr = []
     to_all_curr.append(currency)
-    mon_open = bars['open'].loc[len(bars)-3]
+    mon_open = bars['open'].loc[len(bars)-3] #3
     to_all_curr.append(mon_open)
-    wed_open = bars['open'].loc[len(bars)-1]
+    wed_open = bars['open'].loc[len(bars)-1] #1
     to_all_curr.append(wed_open)
-    mon_rsi_raw = bars['rsi trend'].loc[len(bars)-3]
-    tues_rsi_raw = bars['rsi trend'].loc[len(bars)-2]
+    mon_rsi_raw = bars['rsi trend'].loc[len(bars)-3] #3
+    tues_rsi_raw = bars['rsi trend'].loc[len(bars)-2] #2
     if tues_rsi_raw > 50 and mon_rsi_raw > 50:
         to_all_curr.append('buy')
     elif tues_rsi_raw < 50 and mon_rsi_raw < 50:
+        to_all_curr.append('sell')
+    else:
+        to_all_curr.append('ignore')
+    wk_fast_rsi = bars['rsi wk 14'].loc[len(bars)-2]
+    to_all_curr.append(wk_fast_rsi)
+    wk_slow_rsi = bars['rsi wk 100'].loc[len(bars)-2]
+    to_all_curr.append(wk_slow_rsi)
+    if wk_fast_rsi > 50 and wk_slow_rsi > 50:
+        to_all_curr.append('buy')
+    elif wk_fast_rsi < 50 and wk_slow_rsi < 50:
         to_all_curr.append('sell')
     else:
         to_all_curr.append('ignore')
@@ -61,10 +77,10 @@ action = []
 
 action_raw = []
 for line in range(0, len(all_curr)):
-    if (all_curr['mon_open'].loc[line] > all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'sell': #og = all_curr['rsi trend'].loc[line] == 'sell'
-        action_raw.append('buy')
-    elif (all_curr['mon_open'].loc[line] < all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'buy':  #og = all_curr['rsi trend'].loc[line] == 'buy'
+    if (all_curr['mon_open'].loc[line] > all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'sell' and all_curr['rsi wk bias'].loc[line] == 'sell': #og = all_curr['rsi trend'].loc[line] == 'sell'
         action_raw.append('sell')
+    elif (all_curr['mon_open'].loc[line] < all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'buy' and all_curr['rsi wk bias'].loc[line] == 'buy':  #og = all_curr['rsi trend'].loc[line] == 'buy'
+        action_raw.append('buy')
     else:
         action_raw.append('ignore')
 all_curr['Action'] = action_raw
@@ -73,7 +89,7 @@ to_trade_final_raw = all_curr[all_curr['Action'] != 'ignore']
 to_trade_final_raw.reset_index(inplace = True)
 to_trade_final_raw.drop(columns = 'index', inplace = True)
 
-exits = pd.read_csv('d:/TradeJournal/cerberus_raw.csv')
+exits = pd.read_csv('d:/TradeJournal/cerberus_raw_FTMO.csv')
 
 sls = []
 tps = []
@@ -92,16 +108,15 @@ to_trade_final_raw['sl'] = sls
 to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
-
-# ''' 
+#'''
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
     tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
-    coms = 'ODN_v1'
-    vol = 0.25
-    # vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
+    coms = 'ODN_v2'
+    vol = round((MT.Get_dynamic_account_info()['balance']/2000/len(to_trade_final_raw)),2)
     order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
-    if order != -1:
-        telegram_bot_sendtext('ODIN - ERROR opening order for ', currency, '-',dirxn.upper())
-# '''
+    print(currency, order)
+    if order == -1:
+        telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
+#'''
