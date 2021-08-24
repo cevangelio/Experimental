@@ -5,6 +5,7 @@ Strategy:
 2. RSI14 = cross from oversold to normal (vice versa)/ or from sell to buy 
 3. RSI100 = below50 = sell, above50 = buy, 2 consecutive must have consistent bias
 4. MACD - removed as too restrictive
+5. RSI Week (14, 100)
 
 5. SL = 3ATR
 6. Exit = TP (5ATR) or basketclose (3K) or BE SL hit
@@ -24,7 +25,7 @@ from pathlib import Path
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-ports = [1122, 1127]
+ports = [1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
@@ -61,10 +62,14 @@ def cerberus(tf='H1'):
     rsi_ov_prev_l = []
     rsi_trend_l = []
     rsi_trend_prev_l = []
+    rsi_week_fast_l = []
+    rsi_week_slow_l = []
     macd_l = []
     macd_signal_l = []
     for currency in df_raw['Currency']:
+        print(currency)
         bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=600))
+        bars_wk = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value('W1'), nbrofbars=600))
         current_price = bars['close'].loc[len(bars) - 1]
         current_price_l.append(current_price)
         atr_raw = ta.atr(high = bars['high'], low = bars['low'], close = bars['close'],mamode = 'EMA')
@@ -87,6 +92,14 @@ def cerberus(tf='H1'):
         rsi_trend_l.append(rsi_trend)
         rsi_trend_prev = rsi_trend_raw[len(bars)-3]
         rsi_trend_prev_l.append(rsi_trend_prev)
+        rsi_trend_wk_slow_raw = ta.rsi(bars_wk['close'], length = 100)
+        rsi_trend_wk_fast_raw = ta.rsi(bars_wk['close'], length = 14)
+        bars['rsi week slow'] = rsi_trend_wk_slow_raw
+        bars['rsi week fast'] = rsi_trend_wk_fast_raw
+        rsi_week_fast = rsi_trend_wk_fast_raw[len(bars)-2]
+        rsi_week_slow = rsi_trend_wk_slow_raw[len(bars)-2]
+        rsi_week_fast_l.append(rsi_week_fast)
+        rsi_week_slow_l.append(rsi_week_slow)
         macd_raw = ta.macd(bars['close'])
         macd_final = pd.concat([bars,macd_raw], axis=1, join='inner')
         macd_curr = macd_final.loc[len(bars) - 2]['MACD_12_26_9']
@@ -118,6 +131,8 @@ def cerberus(tf='H1'):
     df_raw['rsi'] = rsi_ov_l
     df_raw['rsi trend prev'] = rsi_trend_prev_l
     df_raw['rsi trend'] = rsi_trend_l
+    df_raw['rsi wk fast'] = rsi_week_fast_l
+    df_raw['rsi wk slow'] = rsi_week_slow_l
     rsi_trend_logic = []
     for line in range(0, len(df_raw)):
         rsi_score_raw = df_raw['rsi trend'].loc[line]
@@ -144,11 +159,22 @@ def cerberus(tf='H1'):
         else:
             rsi_status.append('ignore')
     df_raw['RSI 14'] = rsi_status
+    rsi_status_wk = []
+    for line in range(0, len(df_raw)):
+        rsi_slow = df_raw['rsi wk slow'].loc[line]
+        rsi_fast = df_raw['rsi wk fast'].loc[line]
+        if rsi_slow > 50 and rsi_fast > 50:
+            rsi_status_wk.append('buy')
+        elif rsi_slow < 50 and rsi_fast < 50:
+            rsi_status_wk.append('sell')
+        else:
+            rsi_status_wk.append('ignore')
+    df_raw['rsi wk'] = rsi_status_wk
     trade_status = []
     for line in range(0, len(df_raw)):
-        if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy':  #and df_raw['Current MACD Trend'].loc[line] == 'buy'
+        if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['Current MACD Trend'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
             trade_status.append('buy')
-        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell': # and df_raw['Current MACD Trend'].loc[line] == 'sell'
+        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['Current MACD Trend'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
             trade_status.append('sell')
         else:
             trade_status.append('ignore')
@@ -275,7 +301,7 @@ for port in ports:
         print(to_trade_final_journal)
         print(to_trade_final)
 
-        enter_trade = 'yes'
+        enter_trade = 'no'
         if enter_trade == 'no':
             exit()
 

@@ -24,7 +24,7 @@ for currency in list_symbols:
     blank.to_excel('d:/TradeJournal/MWF/'+currency+'_mwf.xlsx', index=False)
     tf = 'D1'
     # currency = 'GBPJPY'
-    bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=900))
+    bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=1200))
     rsi_trend_raw = ta.rsi(bars['close'], length = 100)
     bars['rsi trend'] = rsi_trend_raw
 

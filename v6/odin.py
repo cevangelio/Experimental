@@ -1,3 +1,16 @@
+'''
+Strat
+
+- Run on wed open candle
+- Check prev wk slow+fast rsi bias
+- Check mon+tue rsi bias 
+- if wk bias == montue bias, action bias
+- stop = 3ATR (H4)
+- exit = 5ATR (H4), 
+    - to implement exit - if wk bias change on next week, close
+    - able to stack if same bias
+'''
+
 import pandas as pd
 import requests
 import datetime
@@ -15,7 +28,7 @@ list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CAD
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
-con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1122, instrument_lookup=symbols)
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -108,13 +121,14 @@ to_trade_final_raw['sl'] = sls
 to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
+vol = round((MT.Get_dynamic_account_info()['balance']/2000/len(to_trade_final_raw)),2)
+print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
     tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
     coms = 'ODN_v2'
-    vol = round((MT.Get_dynamic_account_info()['balance']/2000/len(to_trade_final_raw)),2)
     order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
     print(currency, order)
     if order == -1:
