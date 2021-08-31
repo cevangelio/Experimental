@@ -8,7 +8,7 @@ list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CAD
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
-con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1122, instrument_lookup=symbols)
 
 positions = MT.Get_all_open_positions()
 

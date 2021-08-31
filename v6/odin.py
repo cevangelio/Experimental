@@ -9,6 +9,9 @@ Strat
 - exit = 5ATR (H4), 
     - to implement exit - if wk bias change on next week, close
     - able to stack if same bias
+
+to do:
+- add prev week rsi, if not 2 weeks on same bias, ignore
 '''
 
 import pandas as pd
@@ -121,7 +124,7 @@ to_trade_final_raw['sl'] = sls
 to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
-vol = round((MT.Get_dynamic_account_info()['balance']/2000/len(to_trade_final_raw)),2)
+vol = round((MT.Get_dynamic_account_info()['balance']/2000/len(to_trade_final_raw)*2),2)
 print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:

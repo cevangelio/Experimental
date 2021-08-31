@@ -12,6 +12,8 @@ Strategy:
 7. Run strategy 1 hour before new candle forms (h4)
 8. Move to BE when overbought or oversold
 
+create list during first hour of h4, execute on 3rd hour
+
 stacking winners - to implement
 
 - idea1: every 1.5 atr, if curr price exceeds 1.5 atr place limit order
@@ -301,7 +303,7 @@ for port in ports:
         print(to_trade_final_journal)
         print(to_trade_final)
 
-        enter_trade = 'no'
+        enter_trade = 'yes'
         if enter_trade == 'no':
             exit()
 
