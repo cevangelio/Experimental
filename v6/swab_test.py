@@ -185,12 +185,19 @@ to_trade['current price'] = [MT.Get_last_tick_info(instrument=currency)['bid'] f
 print(to_trade)
 exits = pd.read_csv('d:/TradeJournal/cerberus_raw_FTMO.csv')
 
+to_trade_final = to_trade[to_trade['action']!='ignore']
+if len(to_trade_final) == 0:
+    telegram_bot_sendtext("No trade setup found.")
+    exit()
+else:
+    pass
+
 sls = []
 tps = []
 open_price = []
-for currency in to_trade['Currency']:
+for currency in to_trade_final['Currency']:
     current_price = MT.Get_last_tick_info(instrument=currency)['bid']
-    if to_trade['dirxn'][to_trade['Currency'] == currency].values[0] == 'buy':
+    if to_trade_final['dirxn'][to_trade_final['Currency'] == currency].values[0] == 'buy':
         open_price.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*0.5)
         sls.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
         tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*7)
@@ -201,9 +208,9 @@ for currency in to_trade['Currency']:
     else:
         sls.append(0)
         tps.append(0)
-to_trade['limit price'] = open_price
-to_trade['sl'] = sls
-to_trade['tp'] = tps
+to_trade_final['limit price'] = open_price
+to_trade_final['sl'] = sls
+to_trade_final['tp'] = tps
 
 text = []
 for currency in df['Currency']:
@@ -212,7 +219,7 @@ for currency in df['Currency']:
 message = " || ".join(text)
 telegram_bot_sendtext('SWAB\n\n'+message)
 
-print(to_trade)
+print(to_trade_final)
 
 #count open positions, if greater than 2 ignore - - no need, if positive
 
@@ -235,12 +242,12 @@ for currency in all_pairs:
 
 #trade, limit orders only (0.5 ATR from current price)
 
-for pair in to_trade['Currency']:
+for pair in to_trade_final['Currency']:
     vol = 0.10
-    dirxn = to_trade['dirxn'][to_trade['Currency'] == pair].values[0]
-    limit_price = to_trade['limit price'][to_trade['Currency'] == pair].values[0]
-    sloss = to_trade['sl'][to_trade['Currency'] == pair].values[0]
-    tprof = to_trade['tp'][to_trade['Currency'] == pair].values[0]
+    dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == pair].values[0]
+    limit_price = to_trade_final['limit price'][to_trade_final['Currency'] == pair].values[0]
+    sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
+    tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     broker = port_dict[ports[0]]
     order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment ='SWAB_v1')
     if order != -1:    
