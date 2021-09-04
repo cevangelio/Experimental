@@ -17,6 +17,7 @@ create list during first hour of h4, execute on 3rd hour
 stacking winners - to implement
 
 - idea1: every 1.5 atr, if curr price exceeds 1.5 atr place limit order
+to do, put only limit orders
 '''
 import pandas as pd
 import requests
@@ -30,7 +31,7 @@ MT = Pytrader_API()
 ports = [1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
+list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'NZDCHF','USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
@@ -326,11 +327,11 @@ for port in ports:
             else:
                 vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
             if spread <= 130.0:
-                order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
+                # order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
                 order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
-                if order != -1:    
-                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
-                    telegram_bot_sendtext('Price: ' + str(current_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
+                if order_2 != -1:    
+                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. Limit position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
+                    telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
                     time.sleep(3)
                 else:
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
