@@ -54,6 +54,14 @@ def telegram_bot_sendfile(filename, location):
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
 
+def reverse(d):
+    if d == 'buy':
+        return 'sell'
+    elif d == 'sell':
+        return 'buy'
+    else:
+        return 'ignore'
+
 def cerberus(tf='H1'):
     df_raw = pd.DataFrame()
     df_raw['Currency'] = list_symbols
@@ -188,10 +196,10 @@ def cerberus(tf='H1'):
     for line in range(0, len(df_raw)):
         if df_raw['Action'].loc[line] == 'buy':
             sl.append((df_raw['Current Price'].loc[line]) - (3.3*(df_raw['atr'].loc[line])))
-            tp.append((df_raw['Current Price'].loc[line]) + (5*(df_raw['atr'].loc[line])))
+            tp.append((df_raw['Current Price'].loc[line]) + (8.8*(df_raw['atr'].loc[line])))
         elif df_raw['Action'].loc[line] == 'sell':
             sl.append((df_raw['Current Price'].loc[line]) + (3.3*(df_raw['atr'].loc[line])))
-            tp.append((df_raw['Current Price'].loc[line]) - (5*(df_raw['atr'].loc[line])))
+            tp.append((df_raw['Current Price'].loc[line]) - (8.8*(df_raw['atr'].loc[line])))
         else:
             sl.append(0)
             tp.append(0)
@@ -327,16 +335,16 @@ for port in ports:
             else:
                 vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
             if spread <= 130.0:
-                # order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
-                order_2 = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
+                order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
+                order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_stop'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'STP')
                 if order_2 != -1:    
-                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. Limit position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
+                    telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
                     time.sleep(3)
                 else:
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
             else:
-                limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'LMT')
+                limit_order = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_stop'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'STP')
                 if limit_order != -1:
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))

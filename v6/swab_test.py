@@ -200,11 +200,11 @@ for currency in to_trade_final['Currency']:
     if to_trade_final['dirxn'][to_trade_final['Currency'] == currency].values[0] == 'buy':
         open_price.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*0.5)
         sls.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
-        tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*7)
+        tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*8.8)
     elif to_trade['dirxn'][to_trade['Currency'] == currency].values[0] == 'sell':
         open_price.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*0.5)
         sls.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
-        tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*7)
+        tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*8.8)
     else:
         sls.append(0)
         tps.append(0)
