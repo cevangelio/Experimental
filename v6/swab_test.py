@@ -45,7 +45,7 @@ from pathlib import Path
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-ports = [1125]
+ports = [1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 master = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'NZDCHF','USDCAD', 'USDCHF', 'USDJPY']
 
@@ -115,9 +115,12 @@ def check_pair(top, bottom):
 def pair_score(pair):
     first = pair[0:3]
     second = pair[3:]
-    first_score = df['swab_abs'][df['Currency'] == first].values[0]
-    second_score = df['swab_abs'][df['Currency'] == second].values[0]
-    return first_score + second_score
+    first_score = df['swab'][df['Currency'] == first].values[0]
+    try:
+        second_score = df['swab'][df['Currency'] == second].values[0]
+    except:
+        second_score = 0
+    return first_score - second_score
 
 def dirxn(pair):
     first = pair[0:3]
@@ -226,33 +229,56 @@ print(to_trade_final)
 #move open positions with 2.8 above to BE
 
 positions = MT.Get_all_open_positions()
-all_pairs = set(list(positions['instrument']))
-
+pend_positions = MT.Get_all_orders()
+all_pairs = set(list(positions['instrument']) + list(pend_positions['instrument']))
+print(all_pairs)
 for currency in all_pairs:
+    pip = (MT.Get_instrument_info(instrument = currency))*10
+    print(currency)
     swab_score = pair_score(currency)
+    print(currency, swab_score)
     if swab_score >= 3.0:
         to_close = positions[positions['instrument'] == currency]
         for tix in to_close['ticket']:
-            new_sl = positions['open_price'][positions['ticket'] == tix] - 0
-            move = MT.Set_sl_and_tp_for_order(ticket=tix, stoploss=new_sl, takeprofit=0)
-            if move == True:
-                telegram_bot_sendtext(currency + ' position moved to BE (ticket' + str(tix) + '). SWB score: '+str(swab_score))
-            else:
-                telegram_bot_sendtext(currency + ' position move to BE <FAILED> (ticket' + str(tix) + '). SWB score: '+str(swab_score))
+            magic_num = positions['magic_number'][positions['ticket']==tix].values[0]
+            if magic_num == 42:
+                move = ""
+                if positions['position_type'][positions['ticket']==tix].values[0] == 'sell':
+                    new_sl = positions['open_price'][positions['ticket'] == tix] - 3*pip
+                    move = MT.Set_sl_and_tp_for_order(ticket=tix, stoploss=new_sl, takeprofit=0)
+                elif positions['position_type'][positions['ticket']==tix].values[0] == 'buy':
+                    new_sl = positions['open_price'][positions['ticket'] == tix] + 3*pip
+                    move = MT.Set_sl_and_tp_for_order(ticket=tix, stoploss=new_sl, takeprofit=0)
+                if move == True:
+                    telegram_bot_sendtext(currency + ' position moved to BE (ticket' + str(tix) + '). SWB score: '+str(swab_score))
+                else:
+                    telegram_bot_sendtext(currency + ' position move to BE <FAILED> (ticket' + str(tix) + '). SWB score: '+str(swab_score))
+
+broker = port_dict[ports[0]]
+for pair in to_trade_final['Currency']:
+    currs_traded = []
+    if pair in all_pairs:
+        if len(positions[positions['instrument'] == pair])  >= 1 or len(pend_positions[pend_positions['instrument'] == pair]) >=1:
+            curr_index = to_trade_final[to_trade_final['Currency'] == pair].index.values[0]
+            to_trade_final.drop([curr_index], inplace=True)
+            currs_traded.append(currency)
+    if len(currs_traded) > 0:
+        telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
 #trade, limit orders only (0.5 ATR from current price)
-
+# '''
 for pair in to_trade_final['Currency']:
-    vol = 0.10
+    vol = 0.01
     dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == pair].values[0]
     limit_price = to_trade_final['limit price'][to_trade_final['Currency'] == pair].values[0]
     sloss = to_trade_final['sl'][to_trade_final['Currency'] == pair].values[0]
     tprof = to_trade_final['tp'][to_trade_final['Currency'] == pair].values[0]
     broker = port_dict[ports[0]]
-    order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment ='SWAB_v1')
+    order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=42, stoploss=sloss, takeprofit=tprof, comment ='SWAB_v1')
     if order != -1:    
         telegram_bot_sendtext(broker + ': ' + 'SWB setup found. Limit position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
         telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
         time.sleep(3)
     else:
         telegram_bot_sendtext(broker + ': ' + 'SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
+# '''

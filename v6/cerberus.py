@@ -265,15 +265,17 @@ for port in ports:
                 position_tickets = positions['ticket'][positions['instrument'] == currency]
                   
                 for tickets in position_tickets:
+                    magic_num = positions['magic_number'][positions['ticket']==tickets].values[0]
+                    pip = (MT.Get_instrument_info(instrument = positions['instrument'][positions['ticket'] == tickets].values[0]))*10
                     if positions['position_type'][positions['ticket'] == tickets].values[0] == 'sell':
-                        if rsi_close <= 30:
-                            new_sl = positions['open_price'][positions['ticket'] == tickets] - 0
+                        if rsi_close <= 30 and magic_num == 41:
+                            new_sl = positions['open_price'][positions['ticket'] == tickets] - 3*pip
                             MT.Set_sl_and_tp_for_order(ticket=positions['ticket'][positions['instrument'] == currency].values[0], stoploss=new_sl, takeprofit=0)
                             telegram_bot_sendtext(broker + ': ' + currency + ' SELL position moved to BE. PNL: ' + str(pnl) + '. RSI value oversold: ' + str(round(rsi_close, 2)))
                             time.sleep(1)
                     if positions['position_type'][positions['ticket'] == tickets].values[0] == 'buy':
-                        if rsi_close >= 70:
-                            new_sl = positions['open_price'][positions['ticket'] == tickets] + 0
+                        if rsi_close >= 70 and magic_num == 41:
+                            new_sl = positions['open_price'][positions['ticket'] == tickets] + 3*pip
                             MT.Set_sl_and_tp_for_order(ticket=positions['ticket'][positions['instrument'] == currency].values[0], stoploss=new_sl, takeprofit=0)
                             telegram_bot_sendtext(broker + ': ' + currency + ' BUY position moved to BE. PNL: ' + str(pnl) + '. RSI value overbought: ' + str(round(rsi_close, 2)))
                             time.sleep(1)   
@@ -302,9 +304,11 @@ for port in ports:
             df_journal.to_csv('d:/TradeJournal/trade_journal.csv', index=False)
 
         open_orders = MT.Get_all_orders()
-        for item in open_orders['instrument']:
+        for ticket in open_orders['ticket']:
+            item = open_orders['instrumet'][open_orders['ticket'] == ticket].values[0]
+            magic_num = open_orders['magic_number'][open_orders['ticket'] == ticket].values[0]
             try:
-                if item not in set(list(positions['instrument'])):
+                if item not in set(list(positions['instrument'])) and magic_num == 41:
                     MT.Delete_order_by_ticket(ticket=open_orders['ticket'][open_orders['instrument'] == item].values[0])
             except:
                 pass
@@ -334,7 +338,7 @@ for port in ports:
                 vol = 3.0
             else:
                 vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
-            if spread <= 130.0:
+            if spread <= 13.0:
                 order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
                 order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_stop'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'STP')
                 if order_2 != -1:    

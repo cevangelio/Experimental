@@ -137,7 +137,7 @@ for currency in to_trade_final_raw['Currency']:
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
     tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
     coms = 'ODN_v2'
-    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
+    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=43, stoploss=sloss, takeprofit=tprof, comment =coms)
     print(currency, order)
     if order == -1:
         telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
