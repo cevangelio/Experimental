@@ -34,39 +34,40 @@ def stack(port):
     con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
     open_positions = MT.Get_all_open_positions()
     if len(open_positions) > 0:
-        for currency in open_positions['instrument']:
+        for currency in open_positions['instrument'].unique():
             # print(currency)
             currency_open_positions = len(open_positions[open_positions['instrument']==currency])
             atr = currency_data['atr'][currency_data['Currency'] == currency].values[0]
             current_price = MT.Get_last_tick_info(instrument=currency)['bid']
-            open_price = open_positions['open_price'][open_positions['instrument'] == currency].values[0]
-            dirxn = open_positions['position_type'][open_positions['instrument'] == currency].values[0]
-            magic_num = open_positions['magic_number'][open_positions['instrument'] == currency].values[0]
-            vol = magic_num = open_positions['volume'][open_positions['instrument'] == currency].values[0]
-            if dirxn == 'sell':
-                limit_price = current_price + (0.5*atr)
-                distance = open_price - current_price
-                if distance > 2*atr:
-                    max_positions = distance//(2*atr)
-                    if max_positions < currency_open_positions:
-                        order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment ='stack_v1')
-                        if order != -1:    
-                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack opened: ' + pair + ' (' + dirxn.upper() + ')')
-                            time.sleep(3)
-                        else:
-                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
-            elif dirxn == 'buy':
-                limit_price = current_price - (0.5*atr)
-                distance = current_price - open_price
-                if distance > 2*atr:
-                    max_positions = distance//(2*atr)
-                    if max_positions < currency_open_positions:
-                        order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment ='stack_v1')
-                        if order != -1:    
-                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack opened: ' + pair + ' (' + dirxn.upper() + ')')
-                            time.sleep(3)
-                        else:
-                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
+            for ticket in open_positions['ticket'][open_positions['instrument']== currency]:
+                open_price = open_positions['open_price'][open_positions['ticket'] == ticket].values[0]
+                dirxn = open_positions['position_type'][open_positions['ticket'] == ticket].values[0]
+                magic_num = open_positions['magic_number'][open_positions['ticket'] == ticket].values[0]
+                vol = magic_num = open_positions['volume'][open_positions['ticket'] == ticket].values[0]
+                if dirxn == 'sell':
+                    limit_price = current_price + (0.5*atr)
+                    distance = open_price - current_price
+                    if distance > 2*atr:
+                        max_positions = distance//(2*atr)
+                        if max_positions < currency_open_positions:
+                            order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment ='stack_v1')
+                            if order != -1:    
+                                telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack opened: ' + pair + ' (' + dirxn.upper() + ')')
+                                time.sleep(3)
+                            else:
+                                telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
+                elif dirxn == 'buy':
+                    limit_price = current_price - (0.5*atr)
+                    distance = current_price - open_price
+                    if distance > 2*atr:
+                        max_positions = distance//(2*atr)
+                        if max_positions < currency_open_positions:
+                            order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment ='stack_v1')
+                            if order != -1:    
+                                telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack opened: ' + pair + ' (' + dirxn.upper() + ')')
+                                time.sleep(3)
+                            else:
+                                telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
     return "All done for " + port_dict[port]
 
 
