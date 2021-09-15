@@ -137,7 +137,6 @@ def cerberus(tf='H1'):
                 macd_trend.append('ignore')
         else:
             macd_trend.append('ignore')
-    df_raw['Current MACD Trend'] = macd_trend
     df_raw['rsi prev'] = rsi_ov_prev_l
     df_raw['rsi'] = rsi_ov_l
     df_raw['rsi trend prev'] = rsi_trend_prev_l
@@ -153,7 +152,8 @@ def cerberus(tf='H1'):
         elif rsi_score_raw < 50 and rsi_score_prev_raw < 50:
             rsi_trend_logic.append('sell')
         else:
-            rsi_trend_logic.append('ignore')     
+            rsi_trend_logic.append('ignore')
+    df_raw['Current MACD Trend'] = macd_trend     
     df_raw['RSI 100'] = rsi_trend_logic
     rsi_status = []
     for line in range(0, len(df_raw)):
@@ -187,6 +187,10 @@ def cerberus(tf='H1'):
             trade_status.append('buy')
         elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['Current MACD Trend'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
             trade_status.append('sell')
+        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
+            trade_status.append('sell')
+        elif df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
+            trade_status.append('buy')
         else:
             trade_status.append('ignore')
     df_raw['Action'] = trade_status
@@ -266,7 +270,7 @@ for port in ports:
                   
                 for tickets in position_tickets:
                     magic_num = positions['magic_number'][positions['ticket']==tickets].values[0]
-                    pip = (MT.Get_instrument_info(instrument = positions['instrument'][positions['ticket'] == tickets].values[0]))*10
+                    pip = (MT.Get_instrument_info(instrument = positions['instrument'][positions['ticket'] == tickets].values[0])['point'])*10
                     if positions['position_type'][positions['ticket'] == tickets].values[0] == 'sell':
                         if rsi_close <= 30 and magic_num == 41:
                             new_sl = positions['open_price'][positions['ticket'] == tickets] - 3*pip
@@ -305,7 +309,7 @@ for port in ports:
 
         open_orders = MT.Get_all_orders()
         for ticket in open_orders['ticket']:
-            item = open_orders['instrumet'][open_orders['ticket'] == ticket].values[0]
+            item = open_orders['instrument'][open_orders['ticket'] == ticket].values[0]
             magic_num = open_orders['magic_number'][open_orders['ticket'] == ticket].values[0]
             try:
                 if item not in set(list(positions['instrument'])) and magic_num == 41:

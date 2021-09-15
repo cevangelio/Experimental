@@ -47,13 +47,13 @@ from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
 ports = [1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
-master = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'NZDCHF','USDCAD', 'USDCHF', 'USDJPY']
+master = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCAD','GBPCHF', 'GBPJPY', 'GBPUSD', 'GBPNZD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'NZDCHF','USDCAD', 'USDCHF', 'USDJPY']
 
 
-list_symbols_jpy = ['AUDJPY','CADJPY', 'EURJPY','CHFJPY', 'GBPJPY', 'NZDJPY', 'USDJPY']
-# list_symbols_usd = ['AUDUSD','USDCAD', 'EURUSD','USDCHF', 'GBPUSD', 'NZDUSD']
+# list_symbols_jpy = ['AUDJPY','CADJPY', 'EURJPY','CHFJPY', 'GBPJPY', 'NZDJPY', 'USDJPY']
+list_symbols_usd = ['GBPAUD','GBPCAD', 'EURGBP','GBPCHF', 'GBPUSD', 'GBPNZD', 'GBPJPY']
 
-list_df = ['AUD','CAD', 'EUR','CHF', 'GBP', 'NZD', 'USD']
+list_df = ['AUD','CAD', 'EUR','CHF', 'GBP', 'NZD', 'JPY']
 symbols = {}
 for pair in master:
     symbols[pair] = pair
@@ -92,7 +92,7 @@ def swab_test(tf='H4'):
     df_raw['Currency'] = list_df
     current_price_l = []
     sma_l = []
-    for currency in list_symbols_jpy:
+    for currency in list_symbols_usd:
         print(currency)
         bars = pd.DataFrame(MT.Get_last_x_bars_from_now(instrument = currency, timeframe = MT.get_timeframe_value(tf), nbrofbars=600))
         print(bars)
@@ -151,7 +151,7 @@ for line in range(0, len(df)):
         action.append('buy')
     else:
         action.append('sell')
-df['swab'] = (np.array(df['price']) - np.array(df['sma200']))/(np.array(df['sma200']))*100
+df['swab'] = (np.array(df['price']) - np.array(df['sma200']))/(np.array(df['sma200']))*-100
 df.sort_values(by='swab', ascending = False, inplace=True)
 df.reset_index(inplace=True)
 df.drop(columns=['index'], inplace=True)
@@ -214,8 +214,6 @@ for currency in to_trade_final['Currency']:
 to_trade_final['limit price'] = open_price
 to_trade_final['sl'] = sls
 to_trade_final['tp'] = tps
-to_trade_final.to_csv('d:/TradeJournal/swab_test.csv', index=False)
-telegram_bot_sendfile('swab_test.csv',location='d:/TradeJournal/')
 
 text = []
 for currency in df['Currency']:
@@ -257,19 +255,18 @@ for currency in all_pairs:
                     telegram_bot_sendtext(currency + ' position move to BE <FAILED> (ticket' + str(tix) + '). SWB score: '+str(swab_score))
 
 broker = port_dict[ports[0]]
-currs_traded = []
-
 for pair in to_trade_final['Currency']:
+    currs_traded = []
     if pair in all_pairs:
         if len(positions[positions['instrument'] == pair])  >= 1 or len(pend_positions[pend_positions['instrument'] == pair]) >=1:
             curr_index = to_trade_final[to_trade_final['Currency'] == pair].index.values[0]
             to_trade_final.drop([curr_index], inplace=True)
             currs_traded.append(currency)
-if len(currs_traded) > 0:
-    telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
+    if len(currs_traded) > 0:
+        telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
 #trade, limit orders only (0.5 ATR from current price)
-# '''
+'''
 for pair in to_trade_final['Currency']:
     vol = 0.01
     dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == pair].values[0]
@@ -284,4 +281,4 @@ for pair in to_trade_final['Currency']:
         time.sleep(3)
     else:
         telegram_bot_sendtext(broker + ': ' + 'SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
-# '''
+'''
