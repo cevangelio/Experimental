@@ -352,7 +352,7 @@ for port in ports:
                 else:
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
             else:
-                limit_order = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_stop'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'STP')
+                limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'LMT')
                 if limit_order != -1:
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
