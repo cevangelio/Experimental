@@ -104,6 +104,8 @@ def swab_test(tf='H4'):
         sma_l.append(sma)
     df_raw['price'] = current_price_l
     df_raw['sma200'] = sma_l
+    df_raw['swab'] = (np.array(df_raw['price']) - np.array(df_raw['sma200']))/(np.array(df_raw['sma200']))*100
+    df_raw.loc[len(df_raw)] = ['JPY', 0, 0, 0]
     return df_raw
 
 def check_pair(top, bottom):
@@ -116,79 +118,45 @@ def pair_score(pair):
     first = pair[0:3]
     second = pair[3:]
     first_score = df['swab'][df['Currency'] == first].values[0]
-    try:
-        second_score = df['swab'][df['Currency'] == second].values[0]
-    except:
-        second_score = 0
+    second_score = df['swab'][df['Currency'] == second].values[0]
     return first_score - second_score
 
 def dirxn(pair):
     first = pair[0:3]
     second = pair[3:]
-    first_score = df['swab_abs'][df['Currency'] == first].values[0]
-    second_score = df['swab_abs'][df['Currency'] == second].values[0]
+    first_score = df['swab'][df['Currency'] == first].values[0]
+    second_score = df['swab'][df['Currency'] == second].values[0]
     dominant = ""
     if first_score > second_score:
         dominant = first
     else:
         dominant = second
     raw_score_dominant = df['swab'][df['Currency'] == dominant].values[0]
-    if raw_score_dominant > 0 and dominant == first:
+    if raw_score_dominant >= 0 and dominant == first:
         return 'buy'
-    elif raw_score_dominant < 0 and dominant == first:
+    elif raw_score_dominant <= 0 and dominant == first:
         return 'sell'
-    elif raw_score_dominant > 0 and dominant == second:
+    elif raw_score_dominant >= 0 and dominant == second:
         return 'sell'
-    elif raw_score_dominant < 0 and dominant == second:
+    elif raw_score_dominant <= 0 and dominant == second:
         return 'buy'
 
 
 df = swab_test(tf='H4')
+to_trade_raw = pd.DataFrame()
+to_trade_raw['Currency'] = master
+to_trade_raw['swab_score'] = [pair_score(pair) for pair in master]
+to_trade_raw['dirxn'] = [dirxn(pair) for pair in master]
+to_trade_raw['swab_abs'] = to_trade_raw['swab_score'].map(lambda x:abs(x))
+to_trade_raw.sort_values(by='swab_abs', ascending = False, inplace=True)
+to_trade_raw.reset_index(inplace=True)
+to_trade_raw.drop(columns=['index'], inplace=True)
 
-action = []
-for line in range(0, len(df)):
-    if df['price'].loc[line] > df['sma200'].loc[line]:
-        action.append('buy')
-    else:
-        action.append('sell')
-df['swab'] = (np.array(df['price']) - np.array(df['sma200']))/(np.array(df['sma200']))*100
-df.sort_values(by='swab', ascending = False, inplace=True)
-df.reset_index(inplace=True)
-df.drop(columns=['index'], inplace=True)
-df['swab_abs'] = df['swab'].map(lambda x:abs(x))
-#pair strongest to weakest, check value, if above 1.2 then take action
-
-print(df)
-
-strongest = df['Currency'].loc[0]
-weakest_1 = df['Currency'].loc[len(df)-1]
-weakest_2 = df['Currency'].loc[len(df)-2]
-top_1_score = df['swab_abs'].loc[0]
-
-#determine right pairing name
-#determine direction
-
-to_trade = pd.DataFrame()
-to_trade_curr = []
-top_1 = strongest+weakest_1
-top_2 = strongest+weakest_2
-to_trade_curr.append(check_pair(strongest, weakest_1))
-to_trade_curr.append(check_pair(strongest, weakest_2))
-to_trade['Currency'] = to_trade_curr
-to_trade['score'] = [pair_score(pair) for pair in to_trade_curr]
-to_trade_action = []
-for score in to_trade['score']:
-    if 1.5 <= score <= 2.5:
-        to_trade_action.append('trade')
-    else:
-        to_trade_action.append('ignore')
-to_trade['action'] = to_trade_action
-to_trade['dirxn'] = [dirxn(pair) for pair in to_trade_curr]
-to_trade['current price'] = [MT.Get_last_tick_info(instrument=currency)['bid'] for currency in to_trade['Currency']]
-print(to_trade)
+print(to_trade_raw)
+to_trade_final = to_trade_raw[to_trade_raw['swab_abs'] >= 1.5]
+print(to_trade_final)
 exits = pd.read_csv('d:/TradeJournal/cerberus_raw_FTMO.csv')
 
-to_trade_final = to_trade[to_trade['action']!='ignore']
 if len(to_trade_final) == 0:
     telegram_bot_sendtext("No trade setup found.")
     exit()
@@ -204,7 +172,7 @@ for currency in to_trade_final['Currency']:
         open_price.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*0.5)
         sls.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
         tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*8.8)
-    elif to_trade['dirxn'][to_trade['Currency'] == currency].values[0] == 'sell':
+    elif to_trade_final['dirxn'][to_trade_final['Currency'] == currency].values[0] == 'sell':
         open_price.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*0.5)
         sls.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
         tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*8.8)

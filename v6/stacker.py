@@ -14,7 +14,7 @@ list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CAD
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
-strat = {41:'CBR', 42:'SWB', 43:'ODN', 0:'NAN'}
+strat = {41:'CBR', 42:'SWB', 43:'ODN', 0:'MNX'}
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -37,7 +37,7 @@ def stack(port):
         for ticket in open_positions['ticket']:
             currency = open_positions['instrument'][open_positions['ticket'] == ticket].values[0]
             print(currency)
-            currency_open_positions = len(open_positions['instrument'][open_positions['ticket']==ticket]) + len(open_orders[(open_orders['instrument'] == currency) & (open_orders['comment'] == 'stack_v1')])
+            currency_open_positions = len(open_positions[open_positions['instrument']==currency]) + len(open_orders[(open_orders['instrument'] == currency) & (open_orders['comment'] == 'stack_v1')])
             atr = currency_data['atr'][currency_data['Currency'] == currency].values[0]
             current_price = MT.Get_last_tick_info(instrument=currency)['bid']
             open_price = open_positions['open_price'][open_positions['ticket'] == ticket].values[0]
@@ -72,6 +72,14 @@ def stack(port):
                             telegram_bot_sendtext(port_dict[port]+'-'+ strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
     return "All done for " + port_dict[port]
 
+if datetime.now().weekday() > 5: #don't run on weekends
+    exit()
+elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
+    exit()
+elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5am
+    exit()
+else:
+    pass
 
 for port in ports:
     status = stack(port)
