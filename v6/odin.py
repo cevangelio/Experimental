@@ -127,9 +127,9 @@ print(to_trade_final_raw)
 
 vol = 0
 if len(to_trade_final_raw) < 4:
-    vol = 2
+    vol = 3
 else:
-    vol = round((15/len(to_trade_final_raw)),2)
+    vol = round((30/len(to_trade_final_raw)),2)
 print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:

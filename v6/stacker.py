@@ -47,29 +47,43 @@ def stack(port):
             if dirxn == 'sell':
                 limit_price = current_price + (0.5*atr)
                 distance = open_price - current_price
-                if distance > 2*atr:
+                new_sl = limit_price + (1.5*atr)
+                if distance >= 2*atr:
                     max_positions = distance//(2*atr) + 1
                     if currency_open_positions < max_positions:
-                        order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment ='stack_v1')
+                        order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=new_sl, takeprofit=0, comment ='stack_v1')
                         if order != -1:    
-                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack opened: ' + currency + ' (' + dirxn.upper() + ')')
+                            telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'Stack opened: ' + currency + ' (' + dirxn.upper() + ')')
                             time.sleep(3)
                         else:
-                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
+                            telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
+                
+                if distance >= 3*atr:
+                    move_sl_order = MT.Set_sl_and_tp_for_order(ticket=ticket, stoploss=new_sl, takeprofit=0)
+                    if move_sl_order != -1:
+                        telegram_bot_sendtext(strat[magic_num] + ': ' + 'SL moved:' + currency + ' (' + dirxn.upper() + ')')
+                    else:
+                        telegram_bot_sendtext(strat[magic_num] + ': ' + 'SL move failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
             elif dirxn == 'buy':
                 limit_price = current_price - (0.5*atr)
                 distance = current_price - open_price
-                if distance > 2*atr:
+                new_sl = limit_price - (1.5*atr)
+                if distance >= 2*atr:
                     max_positions = distance//(2*atr) + 1
                     if currency_open_positions < max_positions:
-                        order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=0, takeprofit=0, comment ='stack_v1')
-                        if order != -1:    
+                        order = MT.Open_order(instrument=currency, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=magic_num, stoploss=new_sl, takeprofit=0, comment ='stack_v1')
+                        if order != -1 or move_sl_order != -1:    
                             telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'Stack opened: ' + currency + ' (' + dirxn.upper() + ')')
-                            # telegram_bot_sendtext(strat[magic_num]+' stack opened '+ currency)
                             time.sleep(3)
                         else:
-                            # telegram_bot_sendtext(strat[magic_num]+' stack failed '+ currency)
                             telegram_bot_sendtext(port_dict[port]+'-'+ strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
+                
+                if distance >= 3*atr:
+                    move_sl_order = MT.Set_sl_and_tp_for_order(ticket=ticket, stoploss=new_sl, takeprofit=0)
+                    if move_sl_order != -1:
+                        telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'SL moved:' + currency + ' (' + dirxn.upper() + ')')
+                    else:
+                        telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'SL move failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
     return "All done for " + port_dict[port]
 
 if datetime.now().weekday() > 5: #don't run on weekends

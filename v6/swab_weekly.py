@@ -66,6 +66,7 @@ bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()
 
+'''
 if datetime.now().weekday() > 5: #don't run on weekends
     exit()
 elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
@@ -74,6 +75,7 @@ elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5
     exit()
 else:
     pass
+'''
 
 def telegram_bot_sendtext(bot_message):
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
@@ -139,7 +141,8 @@ def dirxn(pair):
         return 'buy'
 
 
-df = swab_test(tf='H4')
+df = swab_test(tf='W1')
+print(df)
 to_trade_raw = pd.DataFrame()
 to_trade_raw['Currency'] = master
 to_trade_raw['swab_score'] = [pair_score(pair) for pair in master]
@@ -233,9 +236,8 @@ for pair in to_trade_final['Currency']:
 if len(currs_traded) > 0:
     telegram_bot_sendtext(broker + ': ' + str(currs_traded) + ' are ready to trade from screener but have exceeded open positions allowed.')
 
-
-#put filter for above 2.75 swab - trade, limit orders only (0.5 ATR from current price)
-# '''
+#trade, limit orders only (0.5 ATR from current price)
+'''
 for pair in to_trade_final['Currency']:
     vol = 0.01
     dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == pair].values[0]
@@ -250,4 +252,4 @@ for pair in to_trade_final['Currency']:
         time.sleep(3)
     else:
         telegram_bot_sendtext(broker + ': ' + 'SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
-# '''
+'''
