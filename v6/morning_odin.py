@@ -36,7 +36,7 @@ list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CAD
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
-con = MT.Connect(server='127.0.0.1', port=1122, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -118,10 +118,10 @@ for currency in to_trade_final_raw['Currency']:
     current_price = MT.Get_last_tick_info(instrument=currency)['bid']
     if to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0] == 'buy':
         sls.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
-        tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*5)
+        tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.8)
     elif to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0] == 'sell':
         sls.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
-        tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*5)
+        tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.8)
     else:
         sls.append(0)
         tps.append(0)
@@ -134,7 +134,7 @@ vol = 0
 if len(to_trade_final_raw) < 4:
     vol = 3
 else:
-    vol = round((15/len(to_trade_final_raw)),2)
+    vol = round((25/len(to_trade_final_raw)),2)
 print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:

@@ -184,26 +184,27 @@ def cerberus(tf='H1'):
     trade_status = []
     for line in range(0, len(df_raw)):
         if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['Current MACD Trend'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
-            trade_status.append('buy')
+            trade_status.append('sell')
         elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['Current MACD Trend'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
-            trade_status.append('sell')
-        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
-            trade_status.append('sell')
-        elif df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
             trade_status.append('buy')
+        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
+            trade_status.append('buy')
+        elif df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
+            trade_status.append('sell')
         else:
             trade_status.append('ignore')
     df_raw['Action'] = trade_status
-    df_raw['comment'] = [('CBRUS'+df_raw['Currency'].loc[line]+datetime.now().strftime('%Y%m%d%H%M%S')) for line in range(0, len(df_raw))]
+    # df_raw['comment'] = [('CBRUS'+df_raw['Currency'].loc[line]+datetime.now().strftime('%Y%m%d%H%M%S')) for line in range(0, len(df_raw))]
+    df_raw['comment'] = 'CBR_MRFT'
     sl = []
     tp = []
     for line in range(0, len(df_raw)):
         if df_raw['Action'].loc[line] == 'buy':
             sl.append((df_raw['Current Price'].loc[line]) - (3.3*(df_raw['atr'].loc[line])))
-            tp.append((df_raw['Current Price'].loc[line]) + (8.8*(df_raw['atr'].loc[line])))
+            tp.append((df_raw['Current Price'].loc[line]) + (5.5*(df_raw['atr'].loc[line])))
         elif df_raw['Action'].loc[line] == 'sell':
             sl.append((df_raw['Current Price'].loc[line]) + (3.3*(df_raw['atr'].loc[line])))
-            tp.append((df_raw['Current Price'].loc[line]) - (8.8*(df_raw['atr'].loc[line])))
+            tp.append((df_raw['Current Price'].loc[line]) - (5.5*(df_raw['atr'].loc[line])))
         else:
             sl.append(0)
             tp.append(0)
@@ -344,8 +345,8 @@ for port in ports:
                 vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
             if spread <= 13.0:
                 order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
-                order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_stop'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'STP')
-                if order_2 != -1:    
+                # order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_stop'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'STP')
+                if order != -1:    
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
                     time.sleep(3)

@@ -31,11 +31,15 @@ currency_data = pd.read_csv('d:/TradeJournal/cerberus_raw_GP.csv')
 
 def stack(port):
     con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
-    open_positions = MT.Get_all_open_positions()
+    try:
+        open_positions = MT.Get_all_open_positions()
+    except:
+        open_positions = pd.DataFrame()
     open_orders = MT.Get_all_orders()
     if len(open_positions) > 0:
         for ticket in open_positions['ticket']:
             currency = open_positions['instrument'][open_positions['ticket'] == ticket].values[0]
+            current_sl = open_positions['stop_loss'][open_positions['ticket'] == ticket].values[0]
             print(currency)
             currency_open_positions = len(open_positions[open_positions['instrument']==currency]) + len(open_orders[(open_orders['instrument'] == currency) & (open_orders['comment'] == 'stack_v1')])
             atr = currency_data['atr'][currency_data['Currency'] == currency].values[0]
@@ -59,11 +63,12 @@ def stack(port):
                             telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
                 
                 if distance >= 3*atr:
-                    move_sl_order = MT.Set_sl_and_tp_for_order(ticket=ticket, stoploss=new_sl, takeprofit=0)
-                    if move_sl_order != -1:
-                        telegram_bot_sendtext(strat[magic_num] + ': ' + 'SL moved:' + currency + ' (' + dirxn.upper() + ')')
-                    else:
-                        telegram_bot_sendtext(strat[magic_num] + ': ' + 'SL move failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
+                    if current_sl > new_sl:
+                        move_sl_order = MT.Set_sl_and_tp_for_order(ticket=ticket, stoploss=new_sl, takeprofit=0)
+                        if move_sl_order != -1:
+                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'SL moved:' + currency + ' (' + dirxn.upper() + ')')
+                        else:
+                            telegram_bot_sendtext(strat[magic_num] + ': ' + 'SL move failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
             elif dirxn == 'buy':
                 limit_price = current_price - (0.5*atr)
                 distance = current_price - open_price
@@ -79,12 +84,17 @@ def stack(port):
                             telegram_bot_sendtext(port_dict[port]+'-'+ strat[magic_num] + ': ' + 'Stack failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
                 
                 if distance >= 3*atr:
-                    move_sl_order = MT.Set_sl_and_tp_for_order(ticket=ticket, stoploss=new_sl, takeprofit=0)
-                    if move_sl_order != -1:
-                        telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'SL moved:' + currency + ' (' + dirxn.upper() + ')')
-                    else:
-                        telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'SL move failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
-    return "All done for " + port_dict[port]
+                    if current_sl < new_sl:
+                        move_sl_order = MT.Set_sl_and_tp_for_order(ticket=ticket, stoploss=new_sl, takeprofit=0)
+                        if move_sl_order != -1:
+                            telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'SL moved:' + currency + ' (' + dirxn.upper() + ')')
+                        else:
+                            telegram_bot_sendtext(port_dict[port]+'-'+strat[magic_num] + ': ' + 'SL move failed. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
+                    
+        return "All done for " + port_dict[port]
+    else:
+        return "No open positions. " + port_dict[port]
+
 
 if datetime.now().weekday() > 5: #don't run on weekends
     exit()
