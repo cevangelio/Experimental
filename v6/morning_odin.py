@@ -26,7 +26,7 @@ MT = Pytrader_API()
 ports = [1122, 1125, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-if datetime.now().weekday() > 5: #don't run on weekends
+if datetime.now().weekday() > 4: #don't run on weekends
     exit()
 else:
     pass
@@ -55,6 +55,14 @@ def telegram_bot_sendfile(filename, location):
     data = {'chat_id' : bot_chatID}
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
+
+open_positions = MT.Get_all_open_positions()
+print(len(open_positions))
+profit = open_positions['profit'].sum()
+if len(open_positions) > 0:
+    telegram_bot_sendtext('Closing open positions. PNL:$' + str(profit))
+    for ticket in open_positions['ticket']:
+        close_order = MT.Close_position_by_ticket(ticket=ticket)
 
 all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
 

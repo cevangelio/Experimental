@@ -12,6 +12,7 @@ Strat
 
 to do:
 - add prev week rsi, if not 2 weeks on same bias, ignore
+- add close all if entries are left still
 '''
 
 import pandas as pd
@@ -26,7 +27,7 @@ MT = Pytrader_API()
 ports = [1122, 1125, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-if datetime.now().weekday() > 5: #don't run on weekends
+if datetime.now().weekday() > 4: #don't run on weekends
     exit()
 else:
     pass
@@ -57,6 +58,14 @@ def telegram_bot_sendfile(filename, location):
     print(r.status_code, r.reason, r.content)
 
 all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
+
+open_positions = MT.Get_all_open_positions()
+print(len(open_positions))
+profit = open_positions['profit'].sum()
+if len(open_positions) > 0:
+    telegram_bot_sendtext('Closing open positions. PNL:$' + str(profit))
+    for ticket in open_positions['ticket']:
+        close_order = MT.Close_position_by_ticket(ticket=ticket)
 
 for currency in list_symbols:
     print(currency)
@@ -136,7 +145,7 @@ if len(to_trade_final_raw) < 4:
 else:
     vol = round((15/len(to_trade_final_raw)),2)
 print(vol)
-#'''
+# '''
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
@@ -146,4 +155,4 @@ for currency in to_trade_final_raw['Currency']:
     print(currency, order)
     if order == -1:
         telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
-#'''
+# '''
