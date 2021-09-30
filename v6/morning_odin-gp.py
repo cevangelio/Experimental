@@ -26,7 +26,7 @@ MT = Pytrader_API()
 ports = [1122, 1125, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-if datetime.now().weekday() > 4: #don't run on weekends
+if datetime.now().weekday() > 3: #don't run on weekends
     exit()
 else:
     pass
@@ -36,7 +36,7 @@ list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CAD
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
-con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1127, instrument_lookup=symbols)
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -138,12 +138,12 @@ to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
 
-vol = 0
-if len(to_trade_final_raw) < 4:
-    vol = 3
-else:
-    vol = round((25/len(to_trade_final_raw)),2)
-print(vol)
+vol = 0.01
+# if len(to_trade_final_raw) < 4:
+#     vol = 3
+# else:
+#     vol = round((25/len(to_trade_final_raw)),2)
+# print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]

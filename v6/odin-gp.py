@@ -12,6 +12,7 @@ Strat
 
 to do:
 - add prev week rsi, if not 2 weeks on same bias, ignore
+- add close all if entries are left still
 '''
 
 import pandas as pd
@@ -26,7 +27,7 @@ MT = Pytrader_API()
 ports = [1122, 1125, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-if datetime.now().weekday() > 4: #don't run on weekends
+if datetime.now().weekday() > 3: #don't run on weekends
     exit()
 else:
     pass
@@ -36,7 +37,7 @@ list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CAD
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
-con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1127, instrument_lookup=symbols)
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -56,6 +57,8 @@ def telegram_bot_sendfile(filename, location):
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
 
+all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
+
 open_positions = MT.Get_all_open_positions()
 print(len(open_positions))
 profit = open_positions['profit'].sum()
@@ -63,8 +66,6 @@ if len(open_positions) > 0:
     telegram_bot_sendtext('Closing open positions. PNL:$' + str(profit))
     for ticket in open_positions['ticket']:
         close_order = MT.Close_position_by_ticket(ticket=ticket)
-
-all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
 
 for currency in list_symbols:
     print(currency)
@@ -126,10 +127,10 @@ for currency in to_trade_final_raw['Currency']:
     current_price = MT.Get_last_tick_info(instrument=currency)['bid']
     if to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0] == 'buy':
         sls.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
-        tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.8)
+        tps.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*5)
     elif to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0] == 'sell':
         sls.append(current_price + (exits['atr'][exits['Currency'] == currency].values[0])*3.3)        
-        tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*3.8)
+        tps.append(current_price - (exits['atr'][exits['Currency'] == currency].values[0])*5)
     else:
         sls.append(0)
         tps.append(0)
@@ -138,13 +139,13 @@ to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
 
-vol = 0
-if len(to_trade_final_raw) < 4:
-    vol = 3
-else:
-    vol = round((25/len(to_trade_final_raw)),2)
-print(vol)
-#'''
+vol = 0.01
+# if len(to_trade_final_raw) < 4:
+#     vol = 3
+# else:
+#     vol = round((15/len(to_trade_final_raw)),2)
+# print(vol)
+# '''
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
@@ -155,7 +156,7 @@ for currency in to_trade_final_raw['Currency']:
     print(currency, order)
     if order == -1:
         telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
-#'''
+# '''
 
 new_pos = MT.Get_all_open_positions()
 message = 'Total positions opened: '+str(len(new_pos)+','+str(len(new_pos))+'/'+str(len(to_trade_final_raw)))

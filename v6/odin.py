@@ -152,7 +152,11 @@ for currency in to_trade_final_raw['Currency']:
     tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
     coms = 'ODN_v2'
     order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=43, stoploss=sloss, takeprofit=tprof, comment =coms)
+    time.sleep(1)
     print(currency, order)
     if order == -1:
         telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
 # '''
+
+new_pos = MT.Get_all_open_positions()
+message = 'Total positions opened: '+str(len(new_pos)+','+str(len(new_pos))+'/'+str(len(to_trade_final_raw)))
