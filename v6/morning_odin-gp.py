@@ -56,13 +56,13 @@ def telegram_bot_sendfile(filename, location):
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
 
-open_positions = MT.Get_all_open_positions()
-print(len(open_positions))
-profit = open_positions['profit'].sum()
-if len(open_positions) > 0:
-    telegram_bot_sendtext('Closing open positions. PNL:$' + str(profit))
-    for ticket in open_positions['ticket']:
-        close_order = MT.Close_position_by_ticket(ticket=ticket)
+# open_positions = MT.Get_all_open_positions()
+# print(len(open_positions))
+# profit = open_positions['profit'].sum()
+# if len(open_positions) > 0:
+#     telegram_bot_sendtext('Closing open positions. PNL:$' + str(profit))
+#     for ticket in open_positions['ticket']:
+#         close_order = MT.Close_position_by_ticket(ticket=ticket)
 
 all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
 
@@ -138,12 +138,12 @@ to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
 
-vol = 0.01
-# if len(to_trade_final_raw) < 4:
-#     vol = 3
-# else:
-#     vol = round((25/len(to_trade_final_raw)),2)
-# print(vol)
+vol = 0
+if len(to_trade_final_raw) < 4:
+    vol = 0.03
+else:
+    vol = round((0.15/len(to_trade_final_raw)),2)
+print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]

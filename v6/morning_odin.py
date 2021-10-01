@@ -56,13 +56,13 @@ def telegram_bot_sendfile(filename, location):
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
 
-open_positions = MT.Get_all_open_positions()
-print(len(open_positions))
-profit = open_positions['profit'].sum()
-if len(open_positions) > 0:
-    telegram_bot_sendtext('Closing open positions. PNL:$' + str(profit))
-    for ticket in open_positions['ticket']:
-        close_order = MT.Close_position_by_ticket(ticket=ticket)
+# open_positions = MT.Get_all_open_positions()
+# print(len(open_positions))
+# profit = open_positions['profit'].sum()
+# if len(open_positions) > 0:
+#     telegram_bot_sendtext('Closing open positions. PNL:$' + str(profit))
+#     for ticket in open_positions['ticket']:
+#         close_order = MT.Close_position_by_ticket(ticket=ticket)
 
 all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
 
@@ -139,10 +139,13 @@ to_trade_final_raw['tp'] = tps
 print(to_trade_final_raw)
 
 vol = 0
+vol_2 = 0
 if len(to_trade_final_raw) < 4:
     vol = 3
+    vol_2 = 0.75
 else:
     vol = round((25/len(to_trade_final_raw)),2)
+    vol_2 = round((15/len(to_trade_final_raw)),2)
 print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:
@@ -157,5 +160,18 @@ for currency in to_trade_final_raw['Currency']:
         telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
 #'''
 
-new_pos = MT.Get_all_open_positions()
-message = 'Total positions opened: '+str(len(new_pos)+','+str(len(new_pos))+'/'+str(len(to_trade_final_raw)))
+con = MT.Connect(server='127.0.0.1', port=1129, instrument_lookup=symbols)
+
+for currency in to_trade_final_raw['Currency']:
+    dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
+    sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
+    tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
+    coms = 'ODN_v2_GPDEMO_AM'
+    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol_2, openprice = 0.0, slippage = 10, magicnumber=45, stoploss=sloss, takeprofit=tprof, comment =coms)
+    time.sleep(1)
+    print(currency, order)
+    if order == -1:
+        telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
+
+# new_pos = MT.Get_all_open_positions()
+# message = 'Total positions opened: '+str(len(new_pos)+','+str(len(new_pos))+'/'+str(len(to_trade_final_raw)))

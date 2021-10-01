@@ -2,8 +2,8 @@
 
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-port = [1122, 1125, 1127] #FXCM MAIN 50k 1:100
-port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'Global_Prime'}
+port = [1122, 1125, 1127, 1129] #FXCM MAIN 50k 1:100
+port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'Global_Prime', 1129:'Global_Prime_Demo'}
 list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURUSD', 'CHFJPY', 'GBPAUD', 'GBPCHF', 'GBPJPY', 'GBPUSD', 'NZDCAD', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 symbols = {}
 for pair in list_symbols:
