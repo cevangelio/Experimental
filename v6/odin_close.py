@@ -12,7 +12,7 @@ con = MT.Connect(server='127.0.0.1', port=1122, instrument_lookup=symbols)
 
 positions = MT.Get_all_open_positions()
 
-while len(positions) > 0:
-    for pair in positions['instrument']:
+for tix in positions['ticket']:
+    magic_num = positions['magic_number'][positions['ticket']==tix].values[0]
+    if magic_num == 43:
         MT.Close_position_by_ticket(ticket=positions['ticket'][positions['instrument'] == pair].values[0])
-    positions = MT.Get_all_open_positions()

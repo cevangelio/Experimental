@@ -94,9 +94,9 @@ action = []
 action_raw = []
 for line in range(0, len(all_curr)):
     if (all_curr['mon_open'].loc[line] > all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'sell' and all_curr['rsi wk bias'].loc[line] == 'sell': #og = all_curr['rsi trend'].loc[line] == 'sell'
-        action_raw.append('sell')
-    elif (all_curr['mon_open'].loc[line] < all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'buy' and all_curr['rsi wk bias'].loc[line] == 'buy':  #og = all_curr['rsi trend'].loc[line] == 'buy'
         action_raw.append('buy')
+    elif (all_curr['mon_open'].loc[line] < all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'buy' and all_curr['rsi wk bias'].loc[line] == 'buy':  #og = all_curr['rsi trend'].loc[line] == 'buy'
+        action_raw.append('sell')
     else:
         action_raw.append('ignore')
 all_curr['Action'] = action_raw
@@ -124,7 +124,12 @@ to_trade_final_raw['sl'] = sls
 to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
-vol = round((MT.Get_dynamic_account_info()['balance']/2000/len(to_trade_final_raw)*2),2)
+
+vol = 0
+if len(to_trade_final_raw) < 4:
+    vol = 2
+else:
+    vol = round((15/len(to_trade_final_raw)),2)
 print(vol)
 #'''
 for currency in to_trade_final_raw['Currency']:
@@ -132,7 +137,7 @@ for currency in to_trade_final_raw['Currency']:
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
     tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
     coms = 'ODN_v2'
-    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms)
+    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=43, stoploss=sloss, takeprofit=tprof, comment =coms)
     print(currency, order)
     if order == -1:
         telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
