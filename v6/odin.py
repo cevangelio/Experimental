@@ -13,19 +13,26 @@ Strat
 to do:
 - add prev week rsi, if not 2 weeks on same bias, ignore
 - add close all if entries are left still
+
+Update to include GP Live
+
+
+FOLLOW MORNING BIAS! - how to automate this?
+
 '''
 
 import pandas as pd
+from pytz import timezone
 import requests
 import datetime
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, tzinfo
 import time
 from pathlib import Path
 import pandas_ta as ta
 from Pytrader_API_V1_06 import *
 MT = Pytrader_API()
-ports = [1122, 1125, 1127, 1129]
-port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP', 1129:'GP Demo'}
+ports = [1122, 1125, 1127, 1129, 1131]
+port_dict = {1122:'FTMO_Live', 1125:'FXCM_Demo', 1127:'GP_Live', 1129:'GP_Demo', 1131:'FTMO_Demo'}
 
 if datetime.now().weekday() > 4: #don't run on weekends
     exit()
@@ -37,7 +44,8 @@ list_symbols = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CAD
 symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
-con = MT.Connect(server='127.0.0.1', port=1122, instrument_lookup=symbols)
+
+con = MT.Connect(server='127.0.0.1', port=1131, instrument_lookup=symbols)
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -56,6 +64,33 @@ def telegram_bot_sendfile(filename, location):
     data = {'chat_id' : bot_chatID}
     r= requests.post(url, files=files, data=data)
     print(r.status_code, r.reason, r.content)
+
+def reverse(og):
+    if og == 'buy':
+        return 'sell'
+    elif og == 'sell':
+        return 'buy'
+
+def trade_odin(port, vol, rev=False):
+    con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
+    if con == True:
+        for currency in to_trade_final_raw['Currency']:
+            dirxn = ""
+            if rev == False:
+                dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
+            else:
+                dirxn = reverse(to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0])
+            sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
+            tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
+            coms = 'ODN_v2_'+port_dict[port]
+            order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=port, stoploss=0, takeprofit=0, comment =coms)
+            time.sleep(1)
+            print(currency, order)
+            if order == -1:
+                telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
+    else:
+        telegram_bot_sendtext('Odin failed for '+port_dict[port] + '.')
+
 
 all_curr = pd.DataFrame(columns=['Currency', 'mon_open', 'wed_open', 'rsi', 'rsi wk 14', 'rsi wk 100', 'rsi wk bias'])
 
@@ -139,42 +174,41 @@ to_trade_final_raw['tp'] = tps
 
 print(to_trade_final_raw)
 
-vol = 0
-vol_2 = 0
+ftmo_vol = 0
+gp_live_vol = 0
+gp_demo_vol = 0
+fxcm_demo = 0
+
 if len(to_trade_final_raw) < 4:
-    vol = 3
-    vol_2 = 0.75
+    ftmo_vol = 3
+    gp_live_vol = 0.03
+    gp_demo_vol = 0.5
+    fxcm_demo = 3
 else:
-    vol = round((15/len(to_trade_final_raw)),2)
-    vol_2 = round((4/len(to_trade_final_raw)),2)
+    ftmo_vol = round((12/len(to_trade_final_raw)),2)
+    gp_live_vol = round((0.15/len(to_trade_final_raw)),2)
+    gp_demo_vol = round((2/len(to_trade_final_raw)),2)
+    fxcm_demo = round((20/len(to_trade_final_raw)),2)
+# port_dict = {1122:'FTMO_Live', 1125:'FXCM_Demo', 1127:'GP_Live', 1129:'GP_Demo', 1131:'FTMO_Demo'}
 
-print(vol)
-# '''
-for currency in to_trade_final_raw['Currency']:
-    dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
-    sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
-    tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
-    coms = 'ODN_v2'
-    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=43, stoploss=sloss, takeprofit=tprof, comment =coms)
-    time.sleep(1)
-    print(currency, order)
-    if order == -1:
-        telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
-# '''
-
-# new_pos = MT.Get_all_open_positions()
-# message = 'Total positions opened: '+str(len(new_pos)+','+str(len(new_pos))+'/'+str(len(to_trade_final_raw)))
-
-
-con = MT.Connect(server='127.0.0.1', port=1129, instrument_lookup=symbols)
-
-for currency in to_trade_final_raw['Currency']:
-    dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
-    sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
-    tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
-    coms = 'ODN_v2_GPDEMO_PM'
-    order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol_2, openprice = 0.0, slippage = 10, magicnumber=45, stoploss=sloss, takeprofit=tprof, comment =coms)
-    time.sleep(1)
-    print(currency, order)
-    if order == -1:
-        telegram_bot_sendtext('ODIN - ERROR opening order for '+ currency + '-'+ dirxn.upper())
+if datetime.now().hour >= 19:
+    con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
+    morning = MT.Get_closed_positions_within_window(date_from=datetime(date.today().year,date.today().month,date.today().day, tzinfo=timezone), date_to=datetime.now())['profit'].sum()
+    if morning < 0:
+        # trade_odin(port = 1122, vol = ftmo_vol, rev=True)
+        # trade_odin(port = 1125, vol = fxcm_demo, rev=True)
+        # trade_odin(port = 1127, vol= gp_live_vol,rev=True)
+        # trade_odin(port=1129, vol=gp_demo_vol, rev=True)
+        trade_odin(port=1131, vol=ftmo_vol, rev=True)
+    elif morning > 0:
+        # trade_odin(port = 1122, vol = ftmo_vol)
+        # trade_odin(port = 1125, vol = fxcm_demo)
+        # trade_odin(port = 1127, vol= gp_live_vol)
+        # trade_odin(port=1129, vol=gp_demo_vol)
+        trade_odin(port=1131, vol=ftmo_vol)
+elif datetime.now().hour == 7:
+        # trade_odin(port = 1122, vol = ftmo_vol)
+        trade_odin(port = 1125, vol = fxcm_demo)
+        # trade_odin(port = 1127, vol= gp_live_vol)
+        # trade_odin(port=1129, vol=gp_demo_vol)
+        # trade_odin(port=1131, vol=ftmo_vol)

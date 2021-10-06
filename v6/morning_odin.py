@@ -12,6 +12,8 @@ Strat
 
 to do:
 - add prev week rsi, if not 2 weeks on same bias, ignore
+
+update to include GP LIVE
 '''
 
 import pandas as pd
@@ -145,9 +147,9 @@ if len(to_trade_final_raw) < 4:
     vol_2 = 0.75
 else:
     vol = round((25/len(to_trade_final_raw)),2)
-    vol_2 = round((15/len(to_trade_final_raw)),2)
+    vol_2 = round((3/len(to_trade_final_raw)),2)
 print(vol)
-#'''
+#''
 for currency in to_trade_final_raw['Currency']:
     dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
     sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]

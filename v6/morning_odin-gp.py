@@ -26,7 +26,7 @@ MT = Pytrader_API()
 ports = [1122, 1125, 1127]
 port_dict = {1122:'FTMO', 1125:'FXCM', 1127:'GP'}
 
-if datetime.now().weekday() > 3: #don't run on weekends
+if datetime.now().weekday() > 4: #don't run on weekends
     exit()
 else:
     pass
