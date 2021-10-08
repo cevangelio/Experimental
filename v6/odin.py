@@ -23,6 +23,7 @@ FOLLOW MORNING BIAS! - how to automate this?
 
 import pandas as pd
 from pytz import timezone
+import pytz
 import requests
 import datetime
 from datetime import date, datetime, timedelta, tzinfo
@@ -52,7 +53,7 @@ t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
 bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()
-
+timezone = pytz.timezone("Etc/UTC")
 def telegram_bot_sendtext(bot_message):
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
     response = requests.get(send_text)
@@ -188,25 +189,28 @@ else:
     ftmo_vol = round((12/len(to_trade_final_raw)),2)
     gp_live_vol = round((0.15/len(to_trade_final_raw)),2)
     gp_demo_vol = round((2/len(to_trade_final_raw)),2)
-    fxcm_demo = round((20/len(to_trade_final_raw)),2)
+    fxcm_demo = round((12/len(to_trade_final_raw)),2)
 # port_dict = {1122:'FTMO_Live', 1125:'FXCM_Demo', 1127:'GP_Live', 1129:'GP_Demo', 1131:'FTMO_Demo'}
 
 if datetime.now().hour >= 19:
     con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
     morning = MT.Get_closed_positions_within_window(date_from=datetime(date.today().year,date.today().month,date.today().day, tzinfo=timezone), date_to=datetime.now())['profit'].sum()
     if morning < 0:
+        telegram_bot_sendtext('Odin defeated in the morning. Reversal on hand.')
         # trade_odin(port = 1122, vol = ftmo_vol, rev=True)
-        # trade_odin(port = 1125, vol = fxcm_demo, rev=True)
+        trade_odin(port = 1125, vol = fxcm_demo, rev=True)
         # trade_odin(port = 1127, vol= gp_live_vol,rev=True)
         # trade_odin(port=1129, vol=gp_demo_vol, rev=True)
-        trade_odin(port=1131, vol=ftmo_vol, rev=True)
+        # trade_odin(port=1131, vol=ftmo_vol, rev=True)
     elif morning > 0:
+        telegram_bot_sendtext('Odin is triumphant this morning. We charge!')
         # trade_odin(port = 1122, vol = ftmo_vol)
-        # trade_odin(port = 1125, vol = fxcm_demo)
+        trade_odin(port = 1125, vol = fxcm_demo)
         # trade_odin(port = 1127, vol= gp_live_vol)
         # trade_odin(port=1129, vol=gp_demo_vol)
-        trade_odin(port=1131, vol=ftmo_vol)
+        # trade_odin(port=1131, vol=ftmo_vol)
 elif datetime.now().hour == 7:
+        telegram_bot_sendtext('Odin will now test the waters.')
         # trade_odin(port = 1122, vol = ftmo_vol)
         trade_odin(port = 1125, vol = fxcm_demo)
         # trade_odin(port = 1127, vol= gp_live_vol)
