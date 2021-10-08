@@ -1,7 +1,6 @@
 import datetime
 from datetime import datetime
 from pathlib import Path
-from termcolor import colored, cprint
 import time
 import asyncio
 import os
