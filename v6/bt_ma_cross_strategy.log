@@ -1,0 +1,39 @@
+2021-10-10 05:50:48 DEBUG    Connected to back tester.
+2021-10-10 05:50:48 DEBUG    Backtester runs in license.
+2021-10-10 05:50:48 DEBUG    Error in setting data directory
+2021-10-10 05:50:48 DEBUG    Data directory name error
+2021-10-10 05:50:48 DEBUG    Error in setting instruments and/or reading the datafiles
+2021-10-10 05:50:48 DEBUG    Error in creating data factory
+2021-10-10 05:51:23 DEBUG    Connected to back tester.
+2021-10-10 05:51:23 DEBUG    Backtester runs in license.
+2021-10-10 05:51:23 DEBUG    Error in setting data directory
+2021-10-10 05:51:23 DEBUG    Data directory name error
+2021-10-10 05:51:23 DEBUG    Error in setting instruments and/or reading the datafiles
+2021-10-10 05:51:23 DEBUG    Error in creating data factory
+2021-10-10 05:51:23 DEBUG    Strategy started
+2021-10-10 05:53:28 DEBUG    Connecting to back tester failed
+2021-10-10 05:53:28 DEBUG    Backtester runs in demo.
+2021-10-10 05:53:28 DEBUG    Error in resetting the back tester
+2021-10-10 05:53:28 DEBUG    
+2021-10-10 05:53:28 DEBUG    Error in setting data directory
+2021-10-10 05:53:28 DEBUG    
+2021-10-10 05:53:28 DEBUG    Error in setting instruments and/or reading the datafiles
+2021-10-10 05:53:28 DEBUG    
+2021-10-10 05:53:38 DEBUG    Connected to back tester.
+2021-10-10 05:53:38 DEBUG    Backtester runs in license.
+2021-10-10 05:53:38 DEBUG    Error in setting instruments and/or reading the datafiles
+2021-10-10 05:53:38 DEBUG    Error in creating data factory
+2021-10-10 05:53:38 DEBUG    Strategy started
+2021-10-10 05:55:01 DEBUG    Connecting to back tester failed
+2021-10-10 05:55:01 DEBUG    Backtester runs in demo.
+2021-10-10 05:55:01 DEBUG    Error in resetting the back tester
+2021-10-10 05:55:01 DEBUG    
+2021-10-10 05:55:01 DEBUG    Error in setting data directory
+2021-10-10 05:55:01 DEBUG    
+2021-10-10 05:55:01 DEBUG    Error in setting instruments and/or reading the datafiles
+2021-10-10 05:55:01 DEBUG    
+2021-10-10 05:55:14 DEBUG    Connected to back tester.
+2021-10-10 05:55:14 DEBUG    Backtester runs in license.
+2021-10-10 05:55:14 DEBUG    Error in setting instruments and/or reading the datafiles
+2021-10-10 05:55:14 DEBUG    Error in creating data factory
+2021-10-10 05:55:14 DEBUG    Strategy started

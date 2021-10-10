@@ -16,9 +16,6 @@ to do:
 
 Update to include GP Live
 
-
-FOLLOW MORNING BIAS! - how to automate this?
-
 '''
 
 import pandas as pd
@@ -196,19 +193,19 @@ if datetime.now().hour >= 19:
     con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
     morning = MT.Get_closed_positions_within_window(date_from=datetime(date.today().year,date.today().month,date.today().day, tzinfo=timezone), date_to=datetime.now())['profit'].sum()
     if morning < 0:
-        telegram_bot_sendtext('Odin defeated in the morning. Reversal on hand.')
-        # trade_odin(port = 1122, vol = ftmo_vol, rev=True)
-        trade_odin(port = 1125, vol = fxcm_demo, rev=True)
+        telegram_bot_sendtext('Odin defeated in the morning. Reverse.')
+        trade_odin(port = 1122, vol = ftmo_vol, rev=True)
+        # trade_odin(port = 1125, vol = fxcm_demo, rev=True)
         # trade_odin(port = 1127, vol= gp_live_vol,rev=True)
         # trade_odin(port=1129, vol=gp_demo_vol, rev=True)
-        # trade_odin(port=1131, vol=ftmo_vol, rev=True)
+        trade_odin(port=1131, vol=ftmo_vol, rev=True)
     elif morning > 0:
         telegram_bot_sendtext('Odin is triumphant this morning. We charge!')
-        # trade_odin(port = 1122, vol = ftmo_vol)
-        trade_odin(port = 1125, vol = fxcm_demo)
+        trade_odin(port = 1122, vol = ftmo_vol)
+        # trade_odin(port = 1125, vol = fxcm_demo)
         # trade_odin(port = 1127, vol= gp_live_vol)
         # trade_odin(port=1129, vol=gp_demo_vol)
-        # trade_odin(port=1131, vol=ftmo_vol)
+        trade_odin(port=1131, vol=ftmo_vol)
 elif datetime.now().hour == 7:
         telegram_bot_sendtext('Odin will now test the waters.')
         # trade_odin(port = 1122, vol = ftmo_vol)
