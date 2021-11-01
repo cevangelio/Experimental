@@ -43,7 +43,7 @@ symbols = {}
 for pair in list_symbols:
     symbols[pair] = pair
 
-con = MT.Connect(server='127.0.0.1', port=1131, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
 
 home = str(Path.home())
 t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
@@ -69,18 +69,20 @@ def reverse(og):
     elif og == 'sell':
         return 'buy'
 
-def trade_odin(port, vol, rev=False):
+def trade_odin(port, vol, rev='MR'):
     con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
     if con == True:
         for currency in to_trade_final_raw['Currency']:
             dirxn = ""
-            if rev == False:
+            coms = ""
+            if rev == 'MR':
                 dirxn = to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0]
+                coms = 'ODN_v2_MR_'+port_dict[port]
             else:
                 dirxn = reverse(to_trade_final_raw['Action'][to_trade_final_raw['Currency'] == currency].values[0])
+                coms = 'ODN_v2_FT_'+port_dict[port]
             sloss = to_trade_final_raw['sl'][to_trade_final_raw['Currency'] == currency].values[0]
             tprof = to_trade_final_raw['tp'][to_trade_final_raw['Currency'] == currency].values[0]
-            coms = 'ODN_v2_'+port_dict[port]
             order = MT.Open_order(instrument=currency, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=port, stoploss=0, takeprofit=0, comment =coms)
             time.sleep(1)
             print(currency, order)
@@ -141,9 +143,9 @@ action = []
 action_raw = []
 for line in range(0, len(all_curr)):
     if (all_curr['mon_open'].loc[line] > all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'sell' and all_curr['rsi wk bias'].loc[line] == 'sell': #og = all_curr['rsi trend'].loc[line] == 'sell'
-        action_raw.append('buy')
-    elif (all_curr['mon_open'].loc[line] < all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'buy' and all_curr['rsi wk bias'].loc[line] == 'buy':  #og = all_curr['rsi trend'].loc[line] == 'buy'
         action_raw.append('sell')
+    elif (all_curr['mon_open'].loc[line] < all_curr['wed_open'].loc[line]) and all_curr['rsi'].loc[line] == 'buy' and all_curr['rsi wk bias'].loc[line] == 'buy':  #og = all_curr['rsi trend'].loc[line] == 'buy'
+        action_raw.append('buy')
     else:
         action_raw.append('ignore')
 all_curr['Action'] = action_raw
@@ -178,38 +180,38 @@ gp_demo_vol = 0
 fxcm_demo = 0
 
 if len(to_trade_final_raw) < 4:
-    ftmo_vol = 3
+    ftmo_vol = 5
     gp_live_vol = 0.03
     gp_demo_vol = 0.5
-    fxcm_demo = 3
+    fxcm_demo = 5
 else:
-    ftmo_vol = round((12/len(to_trade_final_raw)),2)
+    ftmo_vol = round((20/len(to_trade_final_raw)),2)
     gp_live_vol = round((0.15/len(to_trade_final_raw)),2)
     gp_demo_vol = round((2/len(to_trade_final_raw)),2)
-    fxcm_demo = round((12/len(to_trade_final_raw)),2)
+    fxcm_demo = round((25/len(to_trade_final_raw)),2)
 # port_dict = {1122:'FTMO_Live', 1125:'FXCM_Demo', 1127:'GP_Live', 1129:'GP_Demo', 1131:'FTMO_Demo'}
 
 if datetime.now().hour >= 19:
     con = MT.Connect(server='127.0.0.1', port=1125, instrument_lookup=symbols)
     morning = MT.Get_closed_positions_within_window(date_from=datetime(date.today().year,date.today().month,date.today().day, tzinfo=timezone), date_to=datetime.now())['profit'].sum()
     if morning < 0:
-        telegram_bot_sendtext('Odin defeated in the morning. Reverse.')
-        trade_odin(port = 1122, vol = ftmo_vol, rev=True)
+        telegram_bot_sendtext('Odin defeated in the morning. Exit')
+        trade_odin(port = 1125, vol = round(fxcm_demo/2, 2), rev='FT')
         # trade_odin(port = 1125, vol = fxcm_demo, rev=True)
         # trade_odin(port = 1127, vol= gp_live_vol,rev=True)
         # trade_odin(port=1129, vol=gp_demo_vol, rev=True)
-        trade_odin(port=1131, vol=ftmo_vol, rev=True)
-    elif morning > 0:
-        telegram_bot_sendtext('Odin is triumphant this morning. We charge!')
-        trade_odin(port = 1122, vol = ftmo_vol)
-        # trade_odin(port = 1125, vol = fxcm_demo)
+        # trade_odin(port=1122, vol=ftmo_vol, rev='FT')
+    elif morning >= 0:
+        telegram_bot_sendtext('Odin is triumphant this morning. Taking trade.')
+        # trade_odin(port = 1122, vol = ftmo_vol, rev='FT')
+        trade_odin(port = 1125, vol = fxcm_demo, rev='FT')
         # trade_odin(port = 1127, vol= gp_live_vol)
         # trade_odin(port=1129, vol=gp_demo_vol)
-        trade_odin(port=1131, vol=ftmo_vol)
+        #trade_odin(port=1131, vol=ftmo_vol, rev=True)
 elif datetime.now().hour == 7:
         telegram_bot_sendtext('Odin will now test the waters.')
-        # trade_odin(port = 1122, vol = ftmo_vol)
-        trade_odin(port = 1125, vol = fxcm_demo)
+        # trade_odin(port = 1122, vol = ftmo_vol, rev='FT')
+        trade_odin(port = 1125, vol = fxcm_demo, rev='FT')
         # trade_odin(port = 1127, vol= gp_live_vol)
         # trade_odin(port=1129, vol=gp_demo_vol)
         # trade_odin(port=1131, vol=ftmo_vol)

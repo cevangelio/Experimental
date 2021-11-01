@@ -23,7 +23,7 @@ _instrument_list = ['EURUSD']
 # definition of the timeframes that we be used
 # limit to what is for your stategy, no need to take care of timeframes not used.
 # this will spoil capacity
-timeframe_list = ['M1', 'M15', 'H1']
+timeframe_list = ['M1','M15','H1']
 
 # broker instrument lookup list, just for compatibility
 brokerInstrumentsLookup = {

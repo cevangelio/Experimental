@@ -184,13 +184,13 @@ def cerberus(tf='H1'):
     trade_status = []
     for line in range(0, len(df_raw)):
         if df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['Current MACD Trend'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
-            trade_status.append('sell')
+            trade_status.append('buy')
         elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['Current MACD Trend'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
-            trade_status.append('buy')
-        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
-            trade_status.append('buy')
-        elif df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
             trade_status.append('sell')
+        elif df_raw['RSI 100'].loc[line] == 'sell' and df_raw['RSI 14'].loc[line] == 'sell' and df_raw['rsi wk'].loc[line] == 'sell':
+            trade_status.append('sell')
+        elif df_raw['RSI 100'].loc[line] == 'buy' and df_raw['RSI 14'].loc[line] == 'buy' and df_raw['rsi wk'].loc[line] == 'buy':
+            trade_status.append('buy')
         else:
             trade_status.append('ignore')
     df_raw['Action'] = trade_status
@@ -344,8 +344,8 @@ for port in ports:
             else:
                 vol = round((MT.Get_dynamic_account_info()['balance']*0.000010), 2)
             if spread <= 13.0:
-                order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'_MR')
-                order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_limit'), volume=vol, openprice = tprof, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'_FT')
+                order = MT.Open_order(instrument=pair, ordertype=dirxn, volume=vol, openprice = 0.0, slippage = 10, magicnumber=41, stoploss=sloss, takeprofit=tprof, comment =coms+'_FT')
+                # order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_limit'), volume=vol, openprice = tprof, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'_MR')
                 if order != -1:    
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. Position opened successfully: ' + pair + ' (' + dirxn.upper() + ')')
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))
@@ -353,8 +353,8 @@ for port in ports:
                 else:
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
             else:
-                limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'_MR_LMT')
-                limit_order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'_FT_LMT')
+                limit_order = MT.Open_order(instrument=pair, ordertype=(dirxn+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'_FT_LMT')
+                # limit_order_2 = MT.Open_order(instrument=pair, ordertype=(reverse(dirxn)+'_limit'), volume=vol, openprice = limit_price, slippage = 10, magicnumber=41, stoploss=0, takeprofit=0, comment =coms+'_MR_LMT')
                 if limit_order != -1:
                     telegram_bot_sendtext(broker + ': ' + 'Cerberus setup found but spread too high. ' + pair + ' (' + dirxn.upper() + ' LIMIT), spread: ' + str(spread))
                     telegram_bot_sendtext('Price: ' + str(limit_price) + ', SL: ' + str(sloss) + ', TP: ' + str(tprof))

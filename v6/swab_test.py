@@ -265,7 +265,7 @@ if len(currs_traded) > 0:
 
 
 #put filter for above 2.75 swab - trade, limit orders only (0.5 ATR from current price)
-#'''
+'''
 for pair in to_trade_final['Currency']:
     vol = 0.01
     dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == pair].values[0]
@@ -280,4 +280,4 @@ for pair in to_trade_final['Currency']:
         time.sleep(3)
     else:
         telegram_bot_sendtext(broker + ': ' + 'SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + pair + ' (' + dirxn.upper() + ')')
-#'''
+'''
