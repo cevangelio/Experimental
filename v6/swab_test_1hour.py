@@ -1,3 +1,8 @@
+##SWAB
+'''
+1 HOUR
+
+'''
 import pandas as pd
 import requests
 import datetime
@@ -21,13 +26,12 @@ symbols = {}
 for pair in master:
     symbols[pair] = pair
 
-con = MT.Connect(server='127.0.0.1', port=1129, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1131, instrument_lookup=symbols)
 
 home = str(Path.home())
-t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
-bot_token = t_gram_creds.readline().split('\n')[0]
-bot_chatID = t_gram_creds.readline()
-t_gram_creds.close()
+# t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
+bot_token = '5531334748:AAHFV5_-DsXcbMa0hlhgv1x9q3rmpaNbXfE'
+bot_chatID = '1442179096'
 
 if datetime.now().weekday() > 5: #don't run on weekends
     exit()
@@ -74,7 +78,7 @@ def daily_bias(currency):
     else:
         return 'skip'
 
-def swab_test(tf='H4'):
+def swab_test(tf='H1'):
     df_raw = pd.DataFrame()
     df_raw['Currency'] = list_df
     prev_price_l = []
@@ -130,7 +134,7 @@ def dirxn(pair):
     else:
         return 'na'
 
-df = swab_test(tf='H4')
+df = swab_test(tf='H1')
 to_trade_raw = pd.DataFrame()
 to_trade_raw['Currency'] = master
 to_trade_raw['swab_score'] = [pair_score(pair) for pair in master]
@@ -160,7 +164,6 @@ for currency in df['Currency']:
 message = " || ".join(text)
 telegram_bot_sendtext('SWAB\n\n'+message)
 
-#move open positions with 2.8 above to BE
 positions = MT.Get_all_open_positions()
 profit = positions['profit'].sum()
 current = positions['instrument'].unique()
@@ -177,9 +180,9 @@ for item in current:
     currency_pnl = positions['profit'][positions['instrument'] == item].values[0]
     consolidated_trade_status.append(f'<{dirxn_op.upper()} {item}> || ${round(currency_pnl,2)} || {prev_score_op} -> {score}')
     if item not in signal:
-        if score > 4.0:
+        if score > 3.5:
             MT.Close_position_by_ticket(ticket=tix)
-            telegram_bot_sendtext(f'SWAB TP 4%: Closing position for {item} ({score})')
+            telegram_bot_sendtext(f'SWAB TP 3.5%: Closing position for {item} ({score})')
         
         #create table of past 8 prev scores? 
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')
@@ -197,15 +200,13 @@ print(to_trade_final)
 #count open positions, if greater than 1 ignore - - no need, if positive
 
 for item in signal:
-    if item not in current:
-        vol = round(((MT.Get_dynamic_account_info()['balance'])*.00001),2) #0.1 lot per 10k
-        dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == item].values[0]
-        order = MT.Open_order(instrument=item, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=42, stoploss=0, takeprofit=0, comment ='SWAB_v3w')
-        if order != -1:
-            telegram_bot_sendtext(f'SWB setup found. Position opened successfully: {item} ({dirxn.upper()})')
-            time.sleep(1)
-        else:
-            telegram_bot_sendtext('SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + item + ' (' + dirxn.upper() + ')')
+    vol = round(((MT.Get_dynamic_account_info()['balance'])*.00001),2) #0.1 lot per 10k
+    dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == item].values[0]
+    order = MT.Open_order(instrument=item, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=42, stoploss=0, takeprofit=0, comment ='SWAB_FastTrackv1')
+    if order != -1:
+        telegram_bot_sendtext(f'SWB setup found. Position opened successfully: {item} ({dirxn.upper()})')
+        time.sleep(1)
+    else:
+        telegram_bot_sendtext('SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + item + ' (' + dirxn.upper() + ')')
 
-#trailstop idea - create a prev score. if current score lower than prev score by x%(eg 0.2%), close
 #only open new trades if prev score lower than 2 - this prevents opening new trades after closing from trailstop

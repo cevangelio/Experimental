@@ -1,3 +1,10 @@
+##SWAB
+'''
+Swab Test but go to waitlist
+'''
+from ast import Num
+from multiprocessing.connection import wait
+from re import T
 import pandas as pd
 import requests
 import datetime
@@ -21,10 +28,10 @@ symbols = {}
 for pair in master:
     symbols[pair] = pair
 
-con = MT.Connect(server='127.0.0.1', port=1129, instrument_lookup=symbols)
+con = MT.Connect(server='127.0.0.1', port=1135, instrument_lookup=symbols)
 
 home = str(Path.home())
-t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
+t_gram_creds = open((home+'/Desktop/t_gram_cerberus.txt'), 'r')
 bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()
@@ -146,12 +153,20 @@ to_trade_raw.drop(columns=['index'], inplace=True)
 print(to_trade_raw)
 to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 2.0) & (to_trade_raw['swab_abs_prev'] < 2.0) & (to_trade_raw['dirxn'] == to_trade_raw['week bias'])]
 
+waitlisted = pd.read_csv('d:/TradeJournal/swabv2_waitlist.csv')
+currency_in_waitlist = waitlisted['Currency'].unique()
+print('the waitlisted df \n')
+print(waitlisted)
+
 print(to_trade_final)
 msg_trade_final = []
 for currency in to_trade_final['Currency']:
     buy_or_sell = (to_trade_final['dirxn'][to_trade_final['Currency'] == currency].values[0]).upper()
     score = str(round((to_trade_final['swab_abs'][to_trade_final['Currency'] == currency].values[0]),2))
-    msg_trade_final.append(f'{buy_or_sell} {currency} ({score})')
+    if currency not in currency_in_waitlist:
+        msg_trade_final.append(f'{buy_or_sell} {currency} ({score})')
+    else:
+        print(f'Signal found <{buy_or_sell} {currency} ({score})> but already in waitlist.')
 
 text = []
 for currency in df['Currency']:
@@ -176,36 +191,52 @@ for item in current:
     dirxn_op = positions['position_type'][positions['instrument'] == item].values[0]
     currency_pnl = positions['profit'][positions['instrument'] == item].values[0]
     consolidated_trade_status.append(f'<{dirxn_op.upper()} {item}> || ${round(currency_pnl,2)} || {prev_score_op} -> {score}')
-    if item not in signal:
+    if item not in signal:    
         if score > 4.0:
             MT.Close_position_by_ticket(ticket=tix)
-            telegram_bot_sendtext(f'SWAB TP 4%: Closing position for {item} ({score})')
-        
-        #create table of past 8 prev scores? 
+            telegram_bot_sendtext(f'SWAB TP 3%: Closing position for {item} ({score})')
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')
 telegram_bot_sendtext("\n".join(consolidated_trade_status))
 
 if len(to_trade_final) == 0:
     telegram_bot_sendtext("No new trade setup found.")
-    exit()
+    # exit()
 else:
     message_2 = " || ".join(msg_trade_final)
     telegram_bot_sendtext(message_2)
 
 print(to_trade_final)
-
-#count open positions, if greater than 1 ignore - - no need, if positive
+#item in waitlist. 
 
 for item in signal:
-    if item not in current:
+    if item not in currency_in_waitlist:
+        raw = to_trade_final[to_trade_final['Currency'] == item]
+        currency_data = raw[['Currency', 'swab_score', 'dirxn', 'week bias']]
+        waitlisted = waitlisted.append(currency_data)
+
+waitlisted.reset_index(inplace=True)
+waitlisted.drop(columns='index',inplace=True)
+updated_currency_in_waitlist = waitlisted['Currency'].unique()
+
+print(waitlisted)
+drop_index = []
+for currency in updated_currency_in_waitlist:
+    swab_score = round(to_trade_raw['swab_abs'][to_trade_raw['Currency'] == currency].values[0],2)
+    if swab_score <= 1.0:
+        drop_index.append(waitlisted.index[waitlisted['Currency'] == currency])
         vol = round(((MT.Get_dynamic_account_info()['balance'])*.00001),2) #0.1 lot per 10k
-        dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == item].values[0]
-        order = MT.Open_order(instrument=item, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=42, stoploss=0, takeprofit=0, comment ='SWAB_v3w')
+        dirxn = waitlisted['dirxn'][waitlisted['Currency'] == currency].values[0]
+        order = MT.Open_order(instrument=currency, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=221, stoploss=0, takeprofit=0, comment ='SWAB_v2_2To1')
         if order != -1:
-            telegram_bot_sendtext(f'SWB setup found. Position opened successfully: {item} ({dirxn.upper()})')
+            telegram_bot_sendtext(f'SWB setup found. Position opened successfully: {currency} ({dirxn.upper()})')
             time.sleep(1)
         else:
-            telegram_bot_sendtext('SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + item + ' (' + dirxn.upper() + ')')
+            telegram_bot_sendtext('SWB setup found. ' + (MT.order_return_message).upper() + ' For ' + currency + ' (' + dirxn.upper() + ')')
+
+for num in drop_index: #delete traded currency
+    waitlisted.drop(num, inplace=True)
+
+waitlisted.to_csv('d:/TradeJournal/swabv2_waitlist.csv', index=False)
 
 #trailstop idea - create a prev score. if current score lower than prev score by x%(eg 0.2%), close
 #only open new trades if prev score lower than 2 - this prevents opening new trades after closing from trailstop
