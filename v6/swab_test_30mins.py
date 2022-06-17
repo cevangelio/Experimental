@@ -29,9 +29,10 @@ for pair in master:
 con = MT.Connect(server='127.0.0.1', port=1129, instrument_lookup=symbols)
 
 home = str(Path.home())
-# t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
-bot_token = '5578007811:AAGo37kCvgT417NkuQ2lTjxORBF6rL5frQ4'
-bot_chatID = '1442179096'
+t_gram_creds = open((home+'/Desktop/t_gram_swab30.txt'), 'r')
+bot_token = t_gram_creds.readline().split('\n')[0]
+bot_chatID = t_gram_creds.readline()
+t_gram_creds.close()
 
 if datetime.now().weekday() > 5: #don't run on weekends
     exit()
