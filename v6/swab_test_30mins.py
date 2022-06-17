@@ -30,7 +30,7 @@ con = MT.Connect(server='127.0.0.1', port=1129, instrument_lookup=symbols)
 
 home = str(Path.home())
 # t_gram_creds = open((home+'/Desktop/t_gram.txt'), 'r')
-bot_token = '5531334748:AAHFV5_-DsXcbMa0hlhgv1x9q3rmpaNbXfE'
+bot_token = '5578007811:AAGo37kCvgT417NkuQ2lTjxORBF6rL5frQ4'
 bot_chatID = '1442179096'
 
 if datetime.now().weekday() > 5: #don't run on weekends
@@ -137,18 +137,19 @@ def dirxn(pair):
 df = swab_test(tf='M30')
 to_trade_raw = pd.DataFrame()
 to_trade_raw['Currency'] = master
-to_trade_raw['swab_score'] = [pair_score(pair) for pair in master]
-to_trade_raw['swab_score_prev'] = [pair_score_prev(pair) for pair in master]
+to_trade_raw['swab_score'] = [round(pair_score(pair),2) for pair in master]
+to_trade_raw['swab_score_prev'] = [round(pair_score_prev(pair),2) for pair in master]
 to_trade_raw['dirxn'] = [dirxn(pair) for pair in to_trade_raw['swab_score']]
-to_trade_raw['swab_abs'] = to_trade_raw['swab_score'].map(lambda x:abs(x))
-to_trade_raw['swab_abs_prev'] = to_trade_raw['swab_score_prev'].map(lambda x:abs(x))
+to_trade_raw['swab_abs'] = to_trade_raw['swab_score'].map(lambda x:abs(round(x,2)))
+to_trade_raw['swab_abs_prev'] = to_trade_raw['swab_score_prev'].map(lambda x:abs(round(x,2)))
 to_trade_raw['week bias'] = [daily_bias(pair) for pair in master]
 to_trade_raw.sort_values(by='swab_abs', ascending = False, inplace=True)
 to_trade_raw.reset_index(inplace=True)
 to_trade_raw.drop(columns=['index'], inplace=True)
 
 print(to_trade_raw)
-to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 2.0) & (to_trade_raw['swab_abs_prev'] < 2.0) & (to_trade_raw['dirxn'] == to_trade_raw['week bias'])]
+# to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 2.0) & (to_trade_raw['swab_abs_prev'] < 2.0) & (to_trade_raw['dirxn'] == to_trade_raw['week bias'])]
+to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 2.0) & (to_trade_raw['swab_abs_prev'] < 2.0)]
 
 print(to_trade_final)
 msg_trade_final = []
@@ -180,9 +181,9 @@ for item in current:
     currency_pnl = positions['profit'][positions['instrument'] == item].values[0]
     consolidated_trade_status.append(f'<{dirxn_op.upper()} {item}> || ${round(currency_pnl,2)} || {prev_score_op} -> {score}')
     if item not in signal:
-        if score > 3.5:
+        if score > 3.0:
             MT.Close_position_by_ticket(ticket=tix)
-            telegram_bot_sendtext(f'SWAB TP 3.5%: Closing position for {item} ({score})')
+            telegram_bot_sendtext(f'SWAB TP 3%: Closing position for {item} ({score})')
         
         #create table of past 8 prev scores? 
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')
@@ -200,7 +201,7 @@ print(to_trade_final)
 for item in signal:
     vol = round(((MT.Get_dynamic_account_info()['balance'])*.00001),2) #0.1 lot per 10k
     dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == item].values[0]
-    order = MT.Open_order(instrument=item, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=42, stoploss=0, takeprofit=0, comment ='SWAB_FastTrackv1')
+    order = MT.Open_order(instrument=item, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=42, stoploss=0, takeprofit=0, comment ='SWAB_FastTrack_v30m')
     if order != -1:
         telegram_bot_sendtext(f'SWB setup found. Position opened successfully: {item} ({dirxn.upper()})')
         time.sleep(1)

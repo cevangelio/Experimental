@@ -140,11 +140,11 @@ def dirxn(pair):
 df = swab_test(tf='H4')
 to_trade_raw = pd.DataFrame()
 to_trade_raw['Currency'] = master
-to_trade_raw['swab_score'] = [pair_score(pair) for pair in master]
-to_trade_raw['swab_score_prev'] = [pair_score_prev(pair) for pair in master]
+to_trade_raw['swab_score'] = [round(pair_score(pair),2) for pair in master]
+to_trade_raw['swab_score_prev'] = [round(pair_score_prev(pair),2) for pair in master]
 to_trade_raw['dirxn'] = [dirxn(pair) for pair in to_trade_raw['swab_score']]
-to_trade_raw['swab_abs'] = to_trade_raw['swab_score'].map(lambda x:abs(x))
-to_trade_raw['swab_abs_prev'] = to_trade_raw['swab_score_prev'].map(lambda x:abs(x))
+to_trade_raw['swab_abs'] = to_trade_raw['swab_score'].map(lambda x:abs(round(x,2)))
+to_trade_raw['swab_abs_prev'] = to_trade_raw['swab_score_prev'].map(lambda x:abs(round(x,2)))
 to_trade_raw['week bias'] = [daily_bias(pair) for pair in master]
 to_trade_raw.sort_values(by='swab_abs', ascending = False, inplace=True)
 to_trade_raw.reset_index(inplace=True)
