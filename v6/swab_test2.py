@@ -185,16 +185,18 @@ print(signal)
 
 consolidated_trade_status = ['Current trade status\n']
 for item in current:
-    tix = positions['ticket'][positions['instrument'] == item].values[0]
     score = round(to_trade_raw['swab_abs'][to_trade_raw['Currency'] == item].values[0],2)
     prev_score_op = round(to_trade_raw['swab_abs_prev'][to_trade_raw['Currency'] == item].values[0],2)
     dirxn_op = positions['position_type'][positions['instrument'] == item].values[0]
-    currency_pnl = positions['profit'][positions['instrument'] == item].values[0]
+    currency_pnl = positions['profit'][positions['instrument'] == item].sum()
     consolidated_trade_status.append(f'<{dirxn_op.upper()} {item}> || ${round(currency_pnl,2)} || {prev_score_op} -> {score}')
     if item not in signal:    
         if score > 4.0:
-            MT.Close_position_by_ticket(ticket=tix)
-            telegram_bot_sendtext(f'SWAB TP 3%: Closing position for {item} ({score})')
+            all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+            for tix in all_open_for_pair:
+                MT.Close_position_by_ticket(ticket=tix)
+                telegram_bot_sendtext(f'SWAB TP 4%: Closing position for {item} with ticket {tix} ({score})')
+
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')
 telegram_bot_sendtext("\n".join(consolidated_trade_status))
 

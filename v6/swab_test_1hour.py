@@ -178,12 +178,14 @@ for item in current:
     score = round(to_trade_raw['swab_abs'][to_trade_raw['Currency'] == item].values[0],2)
     prev_score_op = round(to_trade_raw['swab_abs_prev'][to_trade_raw['Currency'] == item].values[0],2)
     dirxn_op = positions['position_type'][positions['instrument'] == item].values[0]
-    currency_pnl = positions['profit'][positions['instrument'] == item].values[0]
+    currency_pnl = positions['profit'][positions['instrument'] == item].sum()
     consolidated_trade_status.append(f'<{dirxn_op.upper()} {item}> || ${round(currency_pnl,2)} || {prev_score_op} -> {score}')
     if item not in signal:
         if score > 3.5:
-            MT.Close_position_by_ticket(ticket=tix)
-            telegram_bot_sendtext(f'SWAB TP 3.5%: Closing position for {item} ({score})')
+            all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+            for tix in all_open_for_pair:
+                MT.Close_position_by_ticket(ticket=tix)
+                telegram_bot_sendtext(f'SWAB TP 3.5%: Closing position for {item} ({score})')
         
         #create table of past 8 prev scores? 
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')
