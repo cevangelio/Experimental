@@ -34,14 +34,14 @@ bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()
 
-if datetime.now().weekday() > 5: #don't run on weekends
-    exit()
-elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
-    exit()
-elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5am
-    exit()
-else:
-    pass
+# if datetime.now().weekday() > 5: #don't run on weekends
+#     exit()
+# elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
+#     exit()
+# elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5am
+#     exit()
+# else:
+#     pass
 
 def telegram_bot_sendtext(bot_message):
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
@@ -113,14 +113,14 @@ def swab_test(tf='M30'):
     df_raw.drop(columns=['index'], inplace=True)
     return df_raw
 
-def pair_score(pair):
+def pair_score(df,pair):
     first = pair[0:3]
     second = pair[3:]
     first_score = df['swab'][df['Currency'] == first].values[0]
     second_score = df['swab'][df['Currency'] == second].values[0]
     return first_score - second_score
 
-def pair_score_prev(pair):
+def pair_score_prev(df,pair):
     first = pair[0:3]
     second = pair[3:]
     first_score = df['swab prev'][df['Currency'] == first].values[0]
@@ -135,11 +135,18 @@ def dirxn(pair):
     else:
         return 'na'
 
+df_4hr_raw = swab_test(tf='H4')
+df_4hr = pd.DataFrame()
+df_4hr['Currency'] = master
+df_4hr['swab_score_4hr'] = [round(pair_score_prev(df_4hr_raw, pair),2) for pair in master]
+print(df_4hr)
+
 df = swab_test(tf='M30')
 to_trade_raw = pd.DataFrame()
 to_trade_raw['Currency'] = master
-to_trade_raw['swab_score'] = [round(pair_score(pair),2) for pair in master]
-to_trade_raw['swab_score_prev'] = [round(pair_score_prev(pair),2) for pair in master]
+to_trade_raw['swab_score_4hr'] = df_4hr['swab_score_4hr']
+to_trade_raw['swab_score'] = [round(pair_score(df,pair),2) for pair in master]
+to_trade_raw['swab_score_prev'] = [round(pair_score_prev(df,pair),2) for pair in master]
 to_trade_raw['dirxn'] = [dirxn(pair) for pair in to_trade_raw['swab_score']]
 to_trade_raw['swab_abs'] = to_trade_raw['swab_score'].map(lambda x:abs(round(x,2)))
 to_trade_raw['swab_abs_prev'] = to_trade_raw['swab_score_prev'].map(lambda x:abs(round(x,2)))
@@ -149,8 +156,8 @@ to_trade_raw.reset_index(inplace=True)
 to_trade_raw.drop(columns=['index'], inplace=True)
 
 print(to_trade_raw)
-# to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 2.0) & (to_trade_raw['swab_abs_prev'] < 2.0) & (to_trade_raw['dirxn'] == to_trade_raw['week bias'])]
-to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 2.0) & (to_trade_raw['swab_abs_prev'] < 2.0)]
+to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 1.5) & (to_trade_raw['swab_abs_prev'] < 1.5) & (to_trade_raw['dirxn'] == to_trade_raw['week bias'])]
+# to_trade_final = to_trade_raw[(to_trade_raw['swab_abs'] >= 1.5) & (to_trade_raw['swab_abs_prev'] < 1.5)] #enter at 1.5
 
 print(to_trade_final)
 msg_trade_final = []
