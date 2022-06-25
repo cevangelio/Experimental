@@ -92,8 +92,9 @@ heartbeat_list = [0,5,10,15,20, 25,30,35,40,45,50,55]
 while datetime.now().weekday() <= 5:
     positions = MT.Get_all_open_positions()
     pnl = positions['profit'].sum()
+    total_positions = positions['volume'].sum()
     if len(positions) > 0:
-        basket_close(target=1500, lot_based='yes', per_lot = 300, shirt_protect='yes', shirt_protect_amt=2000)
+        basket_close(target=round(1000*total_positions,2), lot_based='no', per_lot = 300, shirt_protect='yes', shirt_protect_amt=round(1000*total_positions,2))
         time.sleep(1)
         if datetime.now().minute == 1:
             telegram_bot_sendtext(datetime.now().strftime('%H:%M'),' - Current PNL: ', str(round(pnl, 2)))

@@ -34,14 +34,14 @@ bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()
 
-# if datetime.now().weekday() > 5: #don't run on weekends
-#     exit()
-# elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
-#     exit()
-# elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5am
-#     exit()
-# else:
-#     pass
+if datetime.now().weekday() > 5: #don't run on weekends
+    exit()
+elif datetime.now().weekday() == 5 and datetime.now().hour > 5: #last saturday 5am
+    exit()
+elif datetime.now().weekday() == 0 and datetime.now().hour < 5: #monday before 5am
+    exit()
+else:
+    pass
 
 def telegram_bot_sendtext(bot_message):
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
@@ -210,7 +210,7 @@ print(to_trade_final)
 for item in signal:
     vol = round(((MT.Get_dynamic_account_info()['balance'])*.00001),2) #0.1 lot per 10k
     dirxn = to_trade_final['dirxn'][to_trade_final['Currency'] == item].values[0]
-    order = MT.Open_order(instrument=item, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=42, stoploss=0, takeprofit=0, comment ='SWAB_FastTrack_v30m')
+    order = MT.Open_order(instrument=item, ordertype=(dirxn), volume=vol, openprice = 0, slippage = 10, magicnumber=42, stoploss=0, takeprofit=0, comment ='SWAB_FastTrack_v30m-1.5e')
     if order != -1:
         telegram_bot_sendtext(f'SWB setup found. Position opened successfully: {item} ({dirxn.upper()})')
         time.sleep(1)
