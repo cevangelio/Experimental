@@ -2,9 +2,6 @@
 '''
 Swab Test but go to waitlist
 '''
-from ast import Num
-from multiprocessing.connection import wait
-from re import T
 import pandas as pd
 import requests
 import datetime
