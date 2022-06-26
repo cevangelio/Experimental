@@ -29,7 +29,7 @@ for pair in master:
 con = MT.Connect(server='127.0.0.1', port=1131, instrument_lookup=symbols)
 
 home = str(Path.home())
-t_gram_creds = open((home+'/Desktop/t_gram_swab1hr.txt'), 'r')
+t_gram_creds = open((home+'/Desktop/Creds/t_gram_swab1hr.txt'), 'r')
 bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()

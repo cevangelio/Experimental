@@ -18,4 +18,8 @@ def get_data(currency,port=0):
         print(currency, ' data complete.')
 
 for pair in list_symbols:
-    get_data(pair,1131) #change port here
+    for port in ports:
+        try:
+            get_data(pair,port) #change port here
+        except:
+            print('Port inactive.')

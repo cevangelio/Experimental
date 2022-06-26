@@ -25,7 +25,7 @@ port = 1131 #FTMO
 con = MT.Connect(server='127.0.0.1', port=port, instrument_lookup=symbols)
 
 home = str(Path.home())
-t_gram_creds = open((home+'/Desktop/t_gram_swab1hr.txt'), 'r')
+t_gram_creds = open((home+'/Desktop/Creds/t_gram_swab1hr.txt'), 'r')
 bot_token = t_gram_creds.readline().split('\n')[0]
 bot_chatID = t_gram_creds.readline()
 t_gram_creds.close()
@@ -69,6 +69,7 @@ def basket_close(target=500, lot_based='no', per_lot = 1, shirt_protect = 'yes',
 heartbeat_list = [0,5,10,15,20, 25,30,35,40,45,50,55]
 prev_pnl = 0
 print('\nTanod on duty.\n')
+telegram_bot_sendtext(f'Tanod on duty. {datetime.now().strftime("%H:%M:%S")}')
 while datetime.now().minute < 60:
     if datetime.now().minute == 0:
         print('Restarting.')
