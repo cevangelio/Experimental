@@ -1,6 +1,7 @@
 ##SWAB
 '''
 1 HOUR
+Golden Boy FTMO
 
 '''
 import pandas as pd

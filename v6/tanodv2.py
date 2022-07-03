@@ -66,28 +66,30 @@ def basket_close(target=500, lot_based='no', per_lot = 1, shirt_protect = 'yes',
                 MT.Close_position_by_ticket(ticket=ticket)
             telegram_bot_sendtext('All positions closed. Shirt protect activated. Loss: ' + str(round(pnl, 2)))
 
-heartbeat_list = [0,5,10,15,20, 25,30,35,40,45,50,55]
 prev_pnl = 0
 print('\nTanod on duty.\n')
 telegram_bot_sendtext(f'Tanod on duty. {datetime.now().strftime("%H:%M:%S")}')
 while datetime.now().minute < 60:
-    if datetime.now().minute == 0:
-        print('Restarting.')
+    
+    if (datetime.now().minute == 59) and (datetime.now().second == 0):
+        telegram_bot_sendtext(f'Tanod is Restarting. {datetime.now().strftime("%H:%M:%S")}')
         exit()
 
     positions = MT.Get_all_open_positions()
     pnl = positions['profit'].sum()
     total_positions = positions['volume'].sum()
+
     if total_positions == 0:
-        print(f'No positions as of {datetime.now().strftime("%H:%M:%S")}.', end='\r')
+        print(f'No positions as of {datetime.now().strftime("%H:%M:%S")}.', end='\r', flush=True)
     
     else:
-        if datetime.now().minute in heartbeat_list:
-            if pnl != prev_pnl:
-                print(f'Current {round(pnl,2)}, Target: {round(total_positions*1000,2)}', end='\r')
-                pnl = prev_pnl
+        
+        if pnl != prev_pnl:
+            print(f'Current {round(pnl,2)}, Target: {round(total_positions*1000,2)}', end='\r', flush=True)
+            pnl = prev_pnl
         
         if len(positions) > 0:
-            basket_close(target=round(1000*total_positions,2), lot_based='no', per_lot = 300, shirt_protect='yes', shirt_protect_amt=round(-1000*total_positions,2))
+            balance = MT.Get_dynamic_account_info()['balance']
+            basket_close(target=round(1000*total_positions,2), lot_based='no', per_lot = 300, shirt_protect='yes', shirt_protect_amt=round(.041*balance))
             time.sleep(1)
     
