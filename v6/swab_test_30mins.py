@@ -190,7 +190,9 @@ for item in current:
     dirxn_week = to_trade_raw['week bias'][to_trade_raw['Currency'] == item].values[0]
     currency_pnl = positions['profit'][positions['instrument'] == item].sum()
     consolidated_trade_status.append(f'<{dirxn_op.upper()} {item}> || ${round(currency_pnl,2)} || {prev_score_op} -> {score}')
+    total_positions = positions[positions['instrument'] == item]
     if item not in signal:
+        ##SWAB SCORE LOGIC
         if dirxn_30 == 'buy' and dirxn_week == 'buy':
             if swab >= 3.0:
                 all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
@@ -235,6 +237,17 @@ for item in current:
                 for tix in all_open_for_pair:
                     MT.Close_position_by_ticket(ticket=tix)
                     telegram_bot_sendtext(f'SWAB SL -3: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+        ##basket_close
+        if len(total_positions) > 1:
+            pnl = positions['profit'][positions['instrument'] == item].sum()
+            target = ((positions['volume'][positions['instrument'] == item].sum())*1000)
+            if pnl >= target:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'Basket Close: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+            else:
+                telegram_bot_sendtext(f'{item} - not ready to basket close yet PNL: {round(pnl,2)},TARGET: {round(target,2)}')
 
 profit = MT.Get_all_open_positions()['profit'].sum()
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')
