@@ -67,7 +67,7 @@ def basket_close(target=500, lot_based='no', per_lot = 1, shirt_protect = 'yes',
             telegram_bot_sendtext('All positions closed. Shirt protect activated. Loss: ' + str(round(pnl, 2)))
 
 prev_pnl = 0
-print('\nTanod on duty.\n')
+print('\nTanod on duty. FTMO_SWAB_60\n')
 telegram_bot_sendtext(f'Tanod on duty. {datetime.now().strftime("%H:%M:%S")}')
 while datetime.now().minute < 60:
     

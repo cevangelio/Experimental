@@ -174,27 +174,69 @@ message = " || ".join(text)
 telegram_bot_sendtext('SWAB\n\n'+message)
 
 positions = MT.Get_all_open_positions()
-profit = positions['profit'].sum()
 current = positions['instrument'].unique()
 
 signal = to_trade_final['Currency'].unique() #there should be a position
 print(signal)
 
-consolidated_trade_status = ['Current trade status\n']
+consolidated_trade_status = ['Current trade status - SWAB_30_v1.5e\n']
 for item in current:
     score = round(to_trade_raw['swab_abs'][to_trade_raw['Currency'] == item].values[0],2)
     prev_score_op = round(to_trade_raw['swab_abs_prev'][to_trade_raw['Currency'] == item].values[0],2)
+    swab = round(to_trade_raw['swab_score'][to_trade_raw['Currency'] == item].values[0],2)
+    swab_prev = round(to_trade_raw['swab_score_prev'][to_trade_raw['Currency'] == item].values[0],2)
     dirxn_op = positions['position_type'][positions['instrument'] == item].values[0]
+    dirxn_30 = to_trade_raw['dirxn'][to_trade_raw['Currency'] == item].values[0]
+    dirxn_week = to_trade_raw['week bias'][to_trade_raw['Currency'] == item].values[0]
     currency_pnl = positions['profit'][positions['instrument'] == item].sum()
     consolidated_trade_status.append(f'<{dirxn_op.upper()} {item}> || ${round(currency_pnl,2)} || {prev_score_op} -> {score}')
     if item not in signal:
-        if score > 3.0:
-            all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
-            for tix in all_open_for_pair:
-                MT.Close_position_by_ticket(ticket=tix)
-                telegram_bot_sendtext(f'SWAB TP 3%: Closing position for {item} with ticket {tix} ({score})')
-        
-        #create table of past 8 prev scores? 
+        if dirxn_30 == 'buy' and dirxn_week == 'buy':
+            if swab >= 3.0:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB TP +3: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+            elif swab <= 0:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB SL 0: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+        elif dirxn_30 == 'sell' and dirxn_week == 'sell':
+            if swab <= -3.0:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB TP -3: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+            elif swab >= 0:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB SL 0: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+        elif dirxn_30 == 'sell' and dirxn_week == 'buy':
+            if swab >= 0:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB TP 0: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+            elif swab <= -3.0:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB SL -3: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+        elif dirxn_30 == 'buy' and dirxn_week == 'sell':
+            if swab <= 0:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB TP 0: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+            elif swab >= 3:
+                all_open_for_pair = list(positions['ticket'][positions['instrument'] == item])
+                for tix in all_open_for_pair:
+                    MT.Close_position_by_ticket(ticket=tix)
+                    telegram_bot_sendtext(f'SWAB SL 3: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
+
+profit = MT.Get_all_open_positions()['profit'].sum()
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')
 telegram_bot_sendtext("\n".join(consolidated_trade_status))
 
