@@ -247,7 +247,7 @@ for item in current:
                     MT.Close_position_by_ticket(ticket=tix)
                     telegram_bot_sendtext(f'Basket Close: Closing position for {item} ({dirxn_op}) with ticket {tix} ({swab})')
             else:
-                telegram_bot_sendtext(f'{item} - not ready to basket close yet PNL: {round(pnl,2)},TARGET: {round(target,2)}')
+                telegram_bot_sendtext(f'**{item}** - not ready to basket close yet **PNL**: {round(pnl,2)}, **TARGET**: {round(target,2)}')
 
 profit = MT.Get_all_open_positions()['profit'].sum()
 consolidated_trade_status.append(f'\nCurrent P/L: ${round(profit,2)}.')

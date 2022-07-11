@@ -180,7 +180,7 @@ current = positions['instrument'].unique()
 signal = to_trade_final['Currency'].unique() #there should be a position
 print(signal)
 
-consolidated_trade_status = ['Current trade status - SWAB_60_v2_w8[]\n']
+consolidated_trade_status = ['Current trade status\n']
 for item in current:
     score = round(to_trade_raw['swab_abs'][to_trade_raw['Currency'] == item].values[0],2)
     prev_score_op = round(to_trade_raw['swab_abs_prev'][to_trade_raw['Currency'] == item].values[0],2)
